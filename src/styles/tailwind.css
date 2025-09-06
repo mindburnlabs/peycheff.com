@@ -1,0 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Apple-grade Colors */
+    --bg: #0B0C0F;
+    --surface: #0F1115;
+    --text: #F2F3F5;
+    --muted: #A5ABB3;
+    --line: #1C1F26;
+    --accent: #0A84FF;
+    --radius: 12px;
+  }
+
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-[#0B0C0F] text-[#F2F3F5];
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
+    font-feature-settings: "kern" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", system-ui, sans-serif;
+    font-weight: 600;
+    color: #F2F3F5;
+  }
+
+  h1 {
+    font-size: 56px;
+    line-height: 64px;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+
+  h2 {
+    font-size: 36px;
+    line-height: 44px;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+
+  h3 {
+    font-size: 24px;
+    line-height: 32px;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+
+  p, body {
+    font-size: 16px;
+    line-height: 26px;
+    letter-spacing: 0;
+    font-weight: 400;
+  }
+
+  .text-small {
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .text-caption {
+    font-size: 12px;
+    line-height: 18px;
+  }
+}
+
+@layer components {
+  .apple-container {
+    max-width: 1080px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .apple-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 24px;
+  }
+
+  .apple-card {
+    background: #0F1115;
+    border: 1px solid #1C1F26;
+    border-radius: 12px;
+    padding: 20px 24px;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .apple-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(10, 132, 255, 0.2);
+  }
+
+  .apple-button {
+    background: #0A84FF;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .apple-button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.04);
+  }
+
+  .apple-header {
+    height: 56px;
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(10px) saturate(130%);
+    background: rgba(11, 12, 15, 0.8);
+    border-bottom: 1px solid rgba(28, 31, 38, 0.5);
+    z-index: 50;
+  }
+
+  .apple-input {
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid #1C1F26;
+    background: #0F1115;
+    padding: 0 16px;
+    color: #F2F3F5;
+    font-size: 16px;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .apple-input:focus {
+    outline: none;
+    border-color: #0A84FF;
+    box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.1);
+  }
+
+  .hairline-border {
+    border-color: rgba(28, 31, 38, 0.16);
+  }
+
+  .apple-motion {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .blur-translucent {
+    backdrop-filter: blur(10px) saturate(130%);
+  }
+
+  .baseline-8 {
+    margin-bottom: 8px;
+  }
+
+  .baseline-16 {
+    margin-bottom: 16px;
+  }
+
+  .baseline-24 {
+    margin-bottom: 24px;
+  }
+
+  .baseline-32 {
+    margin-bottom: 32px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .apple-motion {
+      transition: none;
+    }
+    
+    .apple-button:hover {
+      transform: none;
+    }
+    
+    .apple-card:hover {
+      transform: none;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .focus-visible-accent:focus-visible {
+    outline: 2px solid #0A84FF;
+    outline-offset: 2px;
+  }
+
+  .contrast-aa {
+    color: #F2F3F5;
+  }
+
+  .contrast-aa-muted {
+    color: #A5ABB3;
+  }
+}
