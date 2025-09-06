@@ -22,18 +22,18 @@ export default {
     },
     extend: {
       colors: {
-        // Apple-grade color system
-        border: "var(--line, #1C1F26)",
-        input: "#0F1115",
+        // Apple-grade color system with nuanced grays
+        border: "#1C1F26",
+        input: "#1A1D23",
         ring: "#0A84FF",
-        background: "var(--bg, #0B0C0F)",
-        foreground: "var(--text, #F2F3F5)",
+        background: "#0B0C0F",
+        foreground: "#F2F3F5",
         primary: {
           DEFAULT: "#0A84FF",
           foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#0F1115",
+          DEFAULT: "#1A1D23",
           foreground: "#F2F3F5",
         },
         destructive: {
@@ -41,22 +41,44 @@ export default {
           foreground: "#FFFFFF",
         },
         muted: {
-          DEFAULT: "#0F1115",
-          foreground: "#A5ABB3",
+          DEFAULT: "#1A1D23",
+          foreground: "#98A2B3",
         },
         accent: {
           DEFAULT: "#0A84FF",
           foreground: "#FFFFFF",
         },
         popover: {
-          DEFAULT: "#0F1115",
+          DEFAULT: "#1A1D23",
           foreground: "#F2F3F5",
         },
         card: {
-          DEFAULT: "#0F1115",
+          DEFAULT: "#1A1D23",
           foreground: "#F2F3F5",
         },
-        surface: "#0F1115",
+        surface: "#1A1D23",
+        // Apple's nuanced gray scale
+        gray: {
+          50: "#F8F9FA",
+          100: "#E9ECEF",
+          200: "#CED4DA",
+          300: "#98A2B3",
+          400: "#6C757D",
+          500: "#495057",
+          600: "#343A40",
+          700: "#212529",
+          800: "#1A1D23",
+          850: "#161920",
+          900: "#0F1115",
+          950: "#0B0C0F",
+        },
+        // Refined text colors
+        text: {
+          primary: "#F2F3F5",
+          secondary: "#D1D5DB",
+          tertiary: "#98A2B3",
+          quaternary: "#6B7280",
+        },
       },
       borderRadius: {
         lg: "var(--radius, 12px)",
