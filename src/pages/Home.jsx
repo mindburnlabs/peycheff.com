@@ -29,13 +29,13 @@ const Home = () => {
             variants={scrollAnimationVariants.fadeInUp}
           >
             <motion.h1 
-              className="text-h1 mb-8 leading-[1.1] bg-gradient-to-r from-foreground to-text-secondary bg-clip-text text-transparent"
+              className="text-h1 mb-8 leading-[1.1] bg-gradient-to-r from-foreground to-gray-300 bg-clip-text text-transparent"
               variants={scrollAnimationVariants.fadeInUp}
             >
               I build small teams that ship disproportionate outcomes.
             </motion.h1>
             <motion.p 
-              className="text-body-lg leading-[1.4] text-text-secondary mb-16"
+              className="text-body-lg leading-[1.4] text-gray-300 mb-16"
               variants={scrollAnimationVariants.fadeInUp}
             >
               Founder & systems designer. I turn vague ideas into shippable products—fast.

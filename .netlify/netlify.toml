@@ -1,6 +1,5 @@
 headersOrigin = "config"
 redirectsOrigin = "config"
-plugins = []
 
 [forms]
 
@@ -10,6 +9,12 @@ action = "/contact"
 [functions]
 
 [functions."*"]
+
+[[plugins]]
+origin = "ui"
+package = "@netlify/plugin-lighthouse"
+
+[plugins.inputs]
 
 [build]
 publish = "/Users/ivan/Code/personal/peycheff.com/build"

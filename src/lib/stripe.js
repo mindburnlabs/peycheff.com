@@ -3,6 +3,8 @@ import { trackEvent, EVENTS } from './analytics';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
+export { stripePromise };
+
 // Stripe products - complete monetization suite
 export const STRIPE_PRODUCTS = {
   STRATEGY_CALL: {
@@ -273,5 +275,3 @@ export const formatPrice = (priceInCents, currency = 'USD') => {
   }).format(priceInCents / 100);
 };
 
-// Export stripe promise and products
-export { stripePromise };
