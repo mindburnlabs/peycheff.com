@@ -1,101 +1,136 @@
-# React
+# peycheff.com
 
-A modern React-based project utilizing the latest frontend technologies and tools for building responsive web applications.
+> A hyper-clean personal OS for one thing: **convert serious attention into the right conversations**.
 
-## 🚀 Features
+This is the source code for Ivan Peychev's personal website - a refined, Apple-grade portfolio built with modern web technologies.
 
-- **React 18** - React version with improved rendering and concurrent features
-- **Vite** - Lightning-fast build tool and development server
-- **Redux Toolkit** - State management with simplified Redux setup
-- **TailwindCSS** - Utility-first CSS framework with extensive customization
-- **React Router v6** - Declarative routing for React applications
-- **Data Visualization** - Integrated D3.js and Recharts for powerful data visualization
-- **Form Management** - React Hook Form for efficient form handling
-- **Animation** - Framer Motion for smooth UI animations
-- **Testing** - Jest and React Testing Library setup
+## 🎯 Philosophy
 
-## 📋 Prerequisites
+No gimmicks. One font. One accent. One grid. Every line earns its keep.
 
-- Node.js (v14.x or higher)
-- npm or yarn
+## ⚡ Tech Stack
 
-## 🛠️ Installation
+- **React 18** + **Vite** - Fast, modern development
+- **Tailwind CSS** - Utility-first styling with custom design system
+- **Supabase** - Database for subscribers & inquiries
+- **Resend** - Email notifications
+- **Stripe** - Advisory service payments
+- **Google Analytics** - Privacy-focused tracking
+- **Netlify** - Deployment & hosting
 
-1. Install dependencies:
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-   
-2. Start the development server:
-   ```bash
-   npm start
-   # or
-   yarn start
-   ```
-
-## 📁 Project Structure
-
-```
-react_app/
-├── public/             # Static assets
-├── src/
-│   ├── components/     # Reusable UI components
-│   ├── pages/          # Page components
-│   ├── styles/         # Global styles and Tailwind configuration
-│   ├── App.jsx         # Main application component
-│   ├── Routes.jsx      # Application routes
-│   └── index.jsx       # Application entry point
-├── .env                # Environment variables
-├── index.html          # HTML template
-├── package.json        # Project dependencies and scripts
-├── tailwind.config.js  # Tailwind CSS configuration
-└── vite.config.js      # Vite configuration
-```
-
-## 🧩 Adding Routes
-
-To add new routes to the application, update the `Routes.jsx` file:
-
-```jsx
-import { useRoutes } from "react-router-dom";
-import HomePage from "pages/HomePage";
-import AboutPage from "pages/AboutPage";
-
-const ProjectRoutes = () => {
-  let element = useRoutes([
-    { path: "/", element: <HomePage /> },
-    { path: "/about", element: <AboutPage /> },
-    // Add more routes as needed
-  ]);
-
-  return element;
-};
-```
-
-## 🎨 Styling
-
-This project uses Tailwind CSS for styling. The configuration includes:
-
-- Forms plugin for form styling
-- Typography plugin for text styling
-- Aspect ratio plugin for responsive elements
-- Container queries for component-specific responsive design
-- Fluid typography for responsive text
-- Animation utilities
-
-## 📱 Responsive Design
-
-The app is built with responsive design using Tailwind CSS breakpoints.
-
-
-## 📦 Deployment
-
-Build the application for production:
+## 🚀 Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Build for production
 npm run build
 ```
 
+## 🛠️ Environment Setup
+
+Copy `.env` and update with your service keys:
+
+```bash
+# Core Services
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-supabase-key
+VITE_RESEND_API_KEY=your-resend-key
+VITE_STRIPE_PUBLISHABLE_KEY=your-stripe-key
+
+# Analytics
+VITE_GA_MEASUREMENT_ID=your-ga4-id
+```
+
+## 📁 Structure
+
+```
+src/
+├── components/         # Reusable UI components
+│   ├── layout/        # Header, Footer, Layout
+│   └── SEO.jsx        # Structured data & meta tags
+├── pages/             # Route components (Home, About, etc.)
+├── lib/               # Service integrations
+│   ├── supabase.js    # Database client
+│   ├── stripe.js      # Payment processing  
+│   └── analytics.js   # Tracking & events
+└── styles/            # Tailwind CSS + custom styles
+```
+
+## 🎨 Design System
+
+**Locked Visual System:**
+- **Typeface:** SF-first system stack (falls back to Inter)
+- **Accent:** macOS blue `#0A84FF` (links & primary CTAs only)
+- **Palette:** bg `#0B0C0F`, surface `#0F1115`, text `#F2F3F5`, muted `#A5ABB3`
+- **Grid:** 12-col, max-width 1080px, 8px baseline
+- **Motion:** 120–160ms opacity/translate only
+
+## 🔧 Services Setup
+
+### Supabase Tables
+
+Create these tables in your Supabase project:
+
+```sql
+-- Subscribers table
+CREATE TABLE subscribers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  source TEXT DEFAULT 'website',
+  status TEXT DEFAULT 'active',
+  subscribed_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Inquiries table  
+CREATE TABLE inquiries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  linkedin TEXT,
+  company TEXT,
+  problem TEXT NOT NULL,
+  timeline TEXT NOT NULL,
+  budget TEXT NOT NULL,
+  status TEXT DEFAULT 'new',
+  submitted_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Stripe Products
+
+Create a product in Stripe Dashboard:
+- **Sparring Session (90 min)** - $500
+- Update `STRIPE_PRODUCTS.SPARRING_SESSION.priceId` in `src/lib/stripe.js`
+
+## 🚀 Deployment
+
+1. **Connect to Netlify**
+   - Link your repository
+   - Set environment variables in Netlify dashboard
+   - Deploy automatically on push to main
+
+2. **Custom Domain**
+   - Point `peycheff.com` to Netlify DNS
+   - SSL automatically provisioned
+
+3. **Analytics**
+   - Create GA4 property
+   - Add measurement ID to environment
+
+## 📊 Tracking Events
+
+- `cta_work` - Work with me clicks
+- `cta_notes` - Read notes clicks  
+- `cta_subscribe` - Newsletter signups
+- `form_contact_submit` - Contact form submissions
+- `stripe_checkout_start` - Payment flow initiations
+
+---
+
+**Built by Ivan Peychev** • [ivan@peycheff.com](mailto:ivan@peycheff.com) • [@ivanitrust](https://x.com/ivanitrust)
 

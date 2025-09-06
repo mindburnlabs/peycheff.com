@@ -1,12 +1,130 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Inter;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* peycheff.com - hyper-clean personal OS */
+@layer base {
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'kern', 'liga', 'clig', 'calt';
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Better focus outlines */
+  *:focus-visible {
+    outline: 2px solid theme(colors.accent.DEFAULT);
+    outline-offset: 2px;
+  }
+  
+  /* Remove default button styles */
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  
+  /* Better form elements */
+  input, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+  }
 }
 
-* {
-  box-sizing: border-box;
-  line-height: normal;
-  font-family: inherit;
-  margin: unset;
+@layer components {
+  /* Apple-grade micro-interactions */
+  .interactive {
+    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .interactive:hover {
+    transform: translateY(-0.5px);
+  }
+  
+  .interactive:active {
+    transform: translateY(0);
+    transition-duration: 60ms;
+  }
+  
+  /* Refined button styles */
+  .btn {
+    @apply inline-flex items-center justify-center font-medium rounded-xl transition-all duration-120;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply btn bg-accent text-white px-8 py-4 text-[18px];
+    @apply hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-surface text-foreground border border-border px-8 py-4 text-[18px];
+    @apply hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0;
+  }
+  
+  .btn-ghost {
+    @apply btn text-muted-foreground px-8 py-4 text-[18px];
+    @apply hover:text-foreground;
+  }
+  
+  /* Link interactions */
+  .link-primary {
+    @apply text-accent font-medium transition-opacity duration-120 hover:opacity-70;
+  }
+  
+  .link-subtle {
+    @apply text-muted-foreground transition-colors duration-120 hover:text-foreground;
+  }
+  
+  /* Form elements */
+  .input {
+    @apply bg-surface border border-border rounded-lg px-4 py-3 text-[16px];
+    @apply focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent;
+    @apply placeholder-muted-foreground transition-all duration-120;
+  }
+  
+  /* Card interactions */
+  .card {
+    @apply bg-surface border border-border rounded-xl p-8;
+    @apply transition-all duration-160 hover:-translate-y-px hover:shadow-lg;
+  }
+  
+  /* Hover states for interactive elements */
+  .hover-lift {
+    @apply transition-transform duration-120 hover:-translate-y-px;
+  }
+  
+  .hover-accent {
+    @apply transition-colors duration-120 hover:text-accent;
+  }
+  
+  /* Container system */
+  .container {
+    @apply max-w-container mx-auto px-6;
+  }
+  
+  /* Section spacing */
+  .section {
+    @apply py-20 lg:py-32;
+  }
+  
+  .section-border {
+    @apply border-t border-border;
+  }
 }

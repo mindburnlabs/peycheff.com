@@ -2,30 +2,34 @@ import React from "react";
 import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
+import Layout from "components/layout/Layout";
 import NotFound from "pages/NotFound";
-import HomeLanding from './pages/home-landing';
-import NotesContentHub from './pages/notes-content-hub';
-import AdvisoryServices from './pages/advisory-services';
-import ContactInquiry from './pages/contact-inquiry';
-import WorkPortfolio from './pages/work-portfolio';
-import AboutProfile from './pages/about-profile';
+
+// New pages
+import Home from './pages/Home';
+import About from './pages/About';
+import Work from './pages/Work';
+import Notes from './pages/Notes';
+import Advisory from './pages/Advisory';
+import Contact from './pages/Contact';
 
 const Routes = () => {
   return (
     <BrowserRouter>
       <ErrorBoundary>
-      <ScrollToTop />
-      <RouterRoutes>
-        {/* Define your route here */}
-        <Route path="/" element={<AboutProfile />} />
-        <Route path="/home-landing" element={<HomeLanding />} />
-        <Route path="/notes-content-hub" element={<NotesContentHub />} />
-        <Route path="/advisory-services" element={<AdvisoryServices />} />
-        <Route path="/contact-inquiry" element={<ContactInquiry />} />
-        <Route path="/work-portfolio" element={<WorkPortfolio />} />
-        <Route path="/about-profile" element={<AboutProfile />} />
-        <Route path="*" element={<NotFound />} />
-      </RouterRoutes>
+        <ScrollToTop />
+        <Layout>
+          <RouterRoutes>
+            {/* Main navigation routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/work" element={<Work />} />
+            <Route path="/notes" element={<Notes />} />
+            <Route path="/advisory" element={<Advisory />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="*" element={<NotFound />} />
+          </RouterRoutes>
+        </Layout>
       </ErrorBoundary>
     </BrowserRouter>
   );

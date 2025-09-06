@@ -1,3 +1,7 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+
+# Sitemap
+Sitemap: https://peycheff.com/sitemap.xml
+
+# No restrictions for peycheff.com - clean, public site
