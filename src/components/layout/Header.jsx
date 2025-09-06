@@ -27,9 +27,16 @@ const Header = () => {
           {/* Logo */}
           <Link 
             to="/" 
-            className="text-[18px] font-semibold -tracking-[0.01em] hover:opacity-70 transition-opacity duration-120"
+            className="flex items-center space-x-3 hover:opacity-70 transition-opacity duration-120"
           >
-            peycheff
+            <img 
+              src="/assets/images/avatar.jpg" 
+              alt="Ivan Peychev" 
+              className="w-8 h-8 rounded-full object-cover ring-1 ring-border"
+            />
+            <span className="text-[18px] font-semibold -tracking-[0.01em]">
+              peycheff
+            </span>
           </Link>
           
           {/* Navigation */}
