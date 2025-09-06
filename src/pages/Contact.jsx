@@ -49,16 +49,31 @@ const Contact = () => {
         has_company: !!formData.company
       });
       
-      // Save to Supabase
+      // Save to Supabase and send email notifications
       const { addInquiry } = await import('../lib/supabase');
-      const result = await addInquiry(formData);
+      const supabaseResult = await addInquiry(formData);
       
-      if (!result.success) {
-        throw new Error(result.error);
+      if (!supabaseResult.success) {
+        throw new Error(supabaseResult.error);
       }
       
-      // TODO: Send email notifications via Resend API
-      // This would typically be handled by a serverless function or API endpoint
+      // Send email notifications via serverless function
+      const emailResponse = await fetch('/.netlify/functions/contact-inquiry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        console.warn('Email notification failed:', errorData.error);
+        // Don't fail the form submission if email fails - user data is already saved
+      } else {
+        const emailData = await emailResponse.json();
+        console.log('Email notifications sent:', emailData.data);
+      }
       
       setSubmitStatus('success');
       setFormData({

@@ -1,6 +1,7 @@
 [build]
   publish = "build"
   command = "npm run build"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -40,6 +41,15 @@
 [forms.contact]
   action = "/contact"
   
-# Function routes (if adding serverless functions later)
-# [functions]
-#   directory = "functions/"
+# Serverless functions configuration
+[[functions]]
+  name = "contact-inquiry"
+  source = "netlify/functions/contact-inquiry.js"
+  
+[[functions]]
+  name = "newsletter-subscribe"
+  source = "netlify/functions/newsletter-subscribe.js"
+  
+[[functions]]
+  name = "stripe-webhook"
+  source = "netlify/functions/stripe-webhook.js"

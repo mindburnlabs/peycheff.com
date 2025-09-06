@@ -31,8 +31,23 @@ const NewsletterSubscription = ({
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call newsletter subscription API
+      const response = await fetch('/.netlify/functions/newsletter-subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          source: 'newsletter_widget'
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Subscription failed');
+      }
       
       setIsSubscribed(true);
       setEmail('');
