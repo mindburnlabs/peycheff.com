@@ -10,8 +10,11 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Work from './pages/Work';
 import Notes from './pages/Notes';
+import Products from './pages/Products';
 import Advisory from './pages/Advisory';
 import Contact from './pages/Contact';
+import CheckoutSuccess from './pages/CheckoutSuccess';
+import CheckoutCancel from './pages/CheckoutCancel';
 
 const Routes = () => {
   return (
@@ -25,8 +28,14 @@ const Routes = () => {
             <Route path="/about" element={<About />} />
             <Route path="/work" element={<Work />} />
             <Route path="/notes" element={<Notes />} />
+            <Route path="/products" element={<Products />} />
             <Route path="/advisory" element={<Advisory />} />
             <Route path="/contact" element={<Contact />} />
+            
+            {/* Checkout routes */}
+            <Route path="/checkout/success" element={<CheckoutSuccess />} />
+            <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+            
             <Route path="*" element={<NotFound />} />
           </RouterRoutes>
         </Layout>

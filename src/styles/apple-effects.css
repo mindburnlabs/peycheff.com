@@ -1,0 +1,204 @@
+/* Apple-inspired micro-interactions and effects */
+
+/* Sophisticated hover springs - mimics Apple's interface responsiveness */
+.hover-spring {
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hover-spring:hover {
+  transform: scale(1.02) translateY(-1px);
+}
+
+.hover-spring:active {
+  transform: scale(0.98) translateY(0px);
+  transition-duration: 0.1s;
+}
+
+/* Glass morphism with Apple's signature depth */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+  backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255,255,255,0.1),
+    0 8px 32px rgba(0,0,0,0.3),
+    0 1px 2px rgba(0,0,0,0.2);
+}
+
+.glass-card:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%);
+  border-color: rgba(255,255,255,0.15);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255,255,255,0.15),
+    0 12px 40px rgba(0,0,0,0.4),
+    0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Floating elements with natural motion */
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+.floating:nth-child(2) {
+  animation-delay: 2s;
+}
+
+.floating:nth-child(3) {
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(0.5deg); }
+}
+
+/* Sophisticated focus states matching Apple's accessibility standards */
+.focus-ring {
+  transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 
+    0 0 0 3px rgba(10, 132, 255, 0.3),
+    0 0 0 1px rgba(10, 132, 255, 0.6);
+}
+
+/* Smooth text gradients that respond to interaction */
+.text-gradient-hover {
+  background: linear-gradient(90deg, currentColor 0%, currentColor 100%);
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  transition: background-position 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.text-gradient-hover:hover {
+  background: linear-gradient(90deg, #0A84FF 0%, #00C7FF 100%);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Apple-style button with natural press feedback */
+.btn-apple {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.btn-apple::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-apple:hover::before {
+  left: 100%;
+}
+
+.btn-apple:active {
+  transform: scale(0.98) translateZ(-1px);
+}
+
+/* Sophisticated loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0.0) 0%, 
+    rgba(255,255,255,0.03) 50%, 
+    rgba(255,255,255,0.0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Dynamic shadows that respond to hover depth */
+.dynamic-shadow {
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.dynamic-shadow:hover {
+  box-shadow: 
+    0 10px 40px rgba(0,0,0,0.3),
+    0 4px 12px rgba(0,0,0,0.2),
+    0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Natural parallax effects for layered content */
+.parallax-slow { transform: translateZ(-1px) scale(1.5); }
+.parallax-medium { transform: translateZ(-2px) scale(2); }
+.parallax-fast { transform: translateZ(-3px) scale(3); }
+
+/* Apple's signature light leak effect */
+.light-leak {
+  position: relative;
+  overflow: hidden;
+}
+
+.light-leak::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(10,132,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(0,199,255,0.08) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.light-leak:hover::after {
+  opacity: 1;
+}
+
+/* Refined typography with Apple's spacing principles */
+.text-refined {
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Micro-feedback for interactive elements */
+.interactive-feedback {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.interactive-feedback:hover {
+  transform: scale(1.02);
+}
+
+.interactive-feedback:active {
+  transform: scale(0.98);
+  transition-duration: 0.05s;
+}
+
+/* Premium borders with subtle gradients */
+.border-premium {
+  border: 1px solid transparent;
+  background: 
+    linear-gradient(var(--bg-color, #0B0C0F), var(--bg-color, #0B0C0F)) padding-box,
+    linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)) border-box;
+}
+
+.border-premium:hover {
+  background: 
+    linear-gradient(var(--bg-color, #0B0C0F), var(--bg-color, #0B0C0F)) padding-box,
+    linear-gradient(135deg, rgba(10,132,255,0.3), rgba(0,199,255,0.2)) border-box;
+}
