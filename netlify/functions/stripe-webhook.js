@@ -1,65 +1,86 @@
 import Stripe from 'stripe';
-import { validateEmailConfig, sendEmail, EMAIL_TEMPLATES } from './lib/email-service.js';
+import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-// Product metadata mapping
-const PRODUCT_METADATA = {
-  'STRATEGY_CALL': {
+// Initialize Supabase client with service role key
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// Autopilot SKU configuration with fulfillment logic
+const SKU_CONFIG = {
+  'CALL_60': {
     name: 'Strategy Call (60–90 min)',
-    description: 'Founder-to-founder strategy call. 60–90 min + one-page action plan (24h). Digital delivery.',
-    type: 'service'
+    type: 'service',
+    fulfillment: 'schedule',
+    entitlement: 'CALL_60',
+    expires_days: null // lifetime
   },
-  'SPARRING_SESSION': {
-    name: 'Sparring Session (90 min)',
-    description: 'For founders/operators who need ruthless clarity.',
-    type: 'service'
+  'CALL_PACK': {
+    name: 'Strategy Call Pack (3 calls)',
+    type: 'service', 
+    fulfillment: 'schedule',
+    entitlement: 'CALL_PACK',
+    expires_days: 90 // 90 days to use
   },
-  'SPARRING_PACK': {
-    name: 'Sparring Pack (3 calls)',
-    description: 'Three focused working sessions with async review between calls. Digital delivery.',
-    type: 'service'
+  'PACK_30DAY': {
+    name: '30-Day Idea→Product Sprint',
+    type: 'digital',
+    fulfillment: 'personalize_and_deliver',
+    entitlement: 'PACK_30DAY',
+    expires_days: null
   },
-  'OPERATOR_PACK': {
-    name: 'Operator Pack: 30-Day Idea→Product Sprint',
-    description: 'My 30-day operating cadence (PDF/MDX, checklists, calendar). Digital download.',
-    type: 'digital'
+  'KIT_AUTOMATION': {
+    name: 'Micro-Automation Kit',
+    type: 'digital',
+    fulfillment: 'personalize_and_deliver',
+    entitlement: 'KIT_AUTOMATION',
+    expires_days: null
   },
-  'AUTOMATION_KIT': {
-    name: 'Micro-Automation Kit (Bundle of 4)',
-    description: 'Four small, useful automation playbooks (scripts/prompts/JSON). Digital download.',
-    type: 'digital'
+  'KIT_DIAGRAMS': {
+    name: 'Diagram Library Kit',
+    type: 'digital',
+    fulfillment: 'instant_deliver',
+    entitlement: 'KIT_DIAGRAMS',
+    expires_days: null
   },
-  'DIAGRAM_LIBRARY': {
-    name: 'Diagram Library (Team License)',
-    description: '12 high-res system diagrams (SVG/PNG). Licensed for internal team use.',
-    type: 'digital'
-  },
-  'BUILD_NOTES_MONTHLY': {
+  'MEMBER_MONTHLY': {
     name: 'Build Notes Membership',
-    description: '2 operator memos/month, early access to Kits. Email delivery.',
-    type: 'subscription'
+    type: 'subscription',
+    fulfillment: 'membership_welcome',
+    entitlement: 'MEMBER_MONTHLY',
+    expires_days: 31
   },
-  'BUILD_NOTES_YEARLY': {
-    name: 'Build Notes Membership (Yearly)',
-    description: '2 operator memos/month, early access to Kits. Email delivery. Save $18/year.',
-    type: 'subscription'
+  'MEMBER_ANNUAL': {
+    name: 'Build Notes Membership (Annual)',
+    type: 'subscription',
+    fulfillment: 'membership_welcome',
+    entitlement: 'MEMBER_ANNUAL',
+    expires_days: 366
   },
   'OFFICE_HOURS': {
-    name: 'Office Hours Seat (Monthly)',
-    description: '90-min small-group session (max 10). Digital attendance.',
-    type: 'service'
+    name: 'Office Hours Seat',
+    type: 'service',
+    fulfillment: 'schedule',
+    entitlement: 'OFFICE_HOURS',
+    expires_days: 60
   },
-  'SYSTEMS_AUDIT_DEPOSIT': {
-    name: 'Systems Audit (Deposit)',
-    description: 'Non-refundable deposit to reserve a 10-day audit slot. Digital service.',
-    type: 'service'
+  'DEPOSIT_AUDIT': {
+    name: 'Systems Audit Deposit',
+    type: 'service',
+    fulfillment: 'intake_form',
+    entitlement: 'DEPOSIT_AUDIT',
+    expires_days: null
   },
-  'BUILD_SPRINT_DEPOSIT': {
-    name: 'Build Sprint (Slot Deposit)',
-    description: 'Deposit to reserve a 30-day build sprint slot. Applied to total.',
-    type: 'service'
+  'DEPOSIT_SPRINT': {
+    name: 'Build Sprint Deposit',
+    type: 'service',
+    fulfillment: 'intake_form',
+    entitlement: 'DEPOSIT_SPRINT',
+    expires_days: null
   }
 };
 
@@ -74,10 +95,12 @@ export const handler = async (event, context) => {
 
   try {
     // Validate configurations
-    validateEmailConfig();
-    
     if (!process.env.STRIPE_SECRET_KEY || !webhookSecret) {
       throw new Error('Stripe configuration is missing');
+    }
+
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase configuration is missing');
     }
 
     // Verify webhook signature
@@ -98,21 +121,20 @@ export const handler = async (event, context) => {
       };
     }
 
-    console.log('Received Stripe webhook:', stripeEvent.type);
+    console.log('Autopilot webhook received:', stripeEvent.type, stripeEvent.id);
 
     // Handle different event types
     switch (stripeEvent.type) {
       case 'checkout.session.completed':
-        await handleCheckoutCompleted(stripeEvent.data.object);
-        break;
-        
-      case 'payment_intent.succeeded':
-        await handlePaymentSucceeded(stripeEvent.data.object);
+        await handleCheckoutCompleted(stripeEvent.data.object, stripeEvent.id);
         break;
         
       case 'invoice.payment_succeeded':
-        // Handle subscription payments
-        await handleSubscriptionPayment(stripeEvent.data.object);
+        await handleSubscriptionPayment(stripeEvent.data.object, stripeEvent.id);
+        break;
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionCanceled(stripeEvent.data.object);
         break;
         
       default:
@@ -121,11 +143,11 @@ export const handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ received: true })
+      body: JSON.stringify({ received: true, event_id: stripeEvent.id })
     };
 
   } catch (error) {
-    console.error('Stripe webhook error:', error);
+    console.error('Autopilot webhook error:', error);
     
     return {
       statusCode: 500,
@@ -137,126 +159,269 @@ export const handler = async (event, context) => {
   }
 };
 
-// Handle successful checkout completion
-async function handleCheckoutCompleted(session) {
+// Handle successful checkout completion - autopilot style
+async function handleCheckoutCompleted(session, eventId) {
   try {
-    console.log('Processing checkout completion for session:', session.id);
+    console.log('Processing autopilot checkout for session:', session.id);
     
-    // Get customer email and product information
+    // Extract purchase data
     const customerEmail = session.customer_details?.email || session.customer_email;
-    const productKey = session.metadata?.product_key;
+    const productKey = session.metadata?.product_key || inferProductFromSession(session);
     const amount = session.amount_total;
+    const source = session.metadata?.source || 'website';
 
     if (!customerEmail || !productKey) {
-      console.warn('Missing customer email or product key in session metadata');
+      console.warn('Missing customer email or product key:', { customerEmail, productKey });
       return;
     }
 
-    // Get product metadata
-    const productInfo = PRODUCT_METADATA[productKey];
-    if (!productInfo) {
-      console.warn(`Unknown product key: ${productKey}`);
+    const skuConfig = SKU_CONFIG[productKey];
+    if (!skuConfig) {
+      console.warn(`Unknown SKU: ${productKey}`);
       return;
     }
 
-    // Prepare purchase data for email template
-    const purchaseData = {
-      customer_email: customerEmail,
-      session_id: session.id,
-      product_name: productInfo.name,
-      product_description: productInfo.description,
-      product_type: productInfo.type,
-      amount: amount,
-      payment_status: session.payment_status
-    };
+    // 1. Create or update customer
+    await upsertCustomer(customerEmail, session.customer_details?.name);
 
-    // Send purchase confirmation email
-    const confirmationTemplate = EMAIL_TEMPLATES.PURCHASE_CONFIRMATION;
-    const emailResult = await sendEmail({
-      to: customerEmail,
-      subject: confirmationTemplate.subject(productInfo),
-      html: confirmationTemplate.html(purchaseData),
-      replyTo: 'ivan@peycheff.com'
+    // 2. Record the order
+    const order = await createOrder({
+      stripe_event_id: eventId,
+      email: customerEmail,
+      sku: productKey,
+      amount_cents: amount,
+      source,
+      metadata: session.metadata || {}
     });
 
-    if (emailResult.success) {
-      console.log(`Purchase confirmation email sent to ${customerEmail}`);
-      
-      // Also notify Ivan for service-based products
-      if (productInfo.type === 'service') {
-        await sendEmail({
-          to: 'ivan@peycheff.com',
-          subject: `New ${productInfo.name} Purchase - ${customerEmail}`,
-          html: `
-            <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h1 style="color: #10b981;">New Purchase Alert</h1>
-              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>Product:</strong> ${productInfo.name}</p>
-                <p><strong>Customer:</strong> ${customerEmail}</p>
-                <p><strong>Amount:</strong> $${(amount / 100).toFixed(2)}</p>
-                <p><strong>Session ID:</strong> ${session.id}</p>
-              </div>
-              <p>Next step: Reach out to schedule the session within 24 hours.</p>
-            </div>
-          `,
-          replyTo: customerEmail
-        });
-      }
-    } else {
-      console.error('Failed to send purchase confirmation email:', emailResult.error);
-    }
+    // 3. Create entitlement
+    await createEntitlement(customerEmail, skuConfig);
+
+    // 4. Dispatch fulfillment based on SKU type
+    await dispatchFulfillment(productKey, skuConfig, {
+      customer_email: customerEmail,
+      session_id: session.id,
+      order_id: order.id,
+      amount: amount
+    });
+
+    console.log(`Autopilot fulfillment dispatched for ${productKey} → ${customerEmail}`);
 
   } catch (error) {
-    console.error('Error handling checkout completion:', error);
-    throw error;
+    console.error('Error in autopilot checkout:', error);
+    // Don't throw - we want the webhook to succeed even if fulfillment fails
   }
 }
 
-// Handle successful payment (for immediate payments)
-async function handlePaymentSucceeded(paymentIntent) {
+// Handle subscription payments (monthly/annual renewals)
+async function handleSubscriptionPayment(invoice, eventId) {
   try {
-    console.log('Processing payment success for payment intent:', paymentIntent.id);
-    
-    // Get metadata from payment intent
-    const customerEmail = paymentIntent.receipt_email;
-    const productKey = paymentIntent.metadata?.product_key;
-    
-    if (customerEmail && productKey) {
-      // This would typically be handled by checkout.session.completed
-      // But we can add additional logic here if needed
-      console.log(`Payment succeeded for ${productKey} - ${customerEmail}`);
-    }
-    
-  } catch (error) {
-    console.error('Error handling payment success:', error);
-    throw error;
-  }
-}
-
-// Handle subscription payment success
-async function handleSubscriptionPayment(invoice) {
-  try {
-    console.log('Processing subscription payment for invoice:', invoice.id);
+    console.log('Processing subscription payment:', invoice.id);
     
     // Get customer info
     const customer = await stripe.customers.retrieve(invoice.customer);
     const customerEmail = customer.email;
     
     if (!customerEmail) {
-      console.warn('No customer email found for subscription payment');
+      console.warn('No customer email for subscription payment');
       return;
     }
 
-    // For recurring subscription payments (not the first one)
+    // For initial subscription payments, this is handled by checkout.session.completed
+    // For renewals, we need to extend the entitlement
     if (invoice.billing_reason === 'subscription_cycle') {
-      console.log(`Recurring subscription payment from ${customerEmail}`);
+      const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+      const productKey = inferProductFromSubscription(subscription);
       
-      // Send subscription renewal confirmation if needed
-      // This could be a lighter email than the welcome email
+      if (productKey) {
+        const skuConfig = SKU_CONFIG[productKey];
+        if (skuConfig) {
+          // Extend entitlement for renewal
+          await extendEntitlement(customerEmail, skuConfig);
+          console.log(`Entitlement extended for ${productKey} → ${customerEmail}`);
+        }
+      }
     }
     
   } catch (error) {
     console.error('Error handling subscription payment:', error);
+  }
+}
+
+// Handle subscription cancellation
+async function handleSubscriptionCanceled(subscription) {
+  try {
+    console.log('Processing subscription cancellation:', subscription.id);
+    
+    const customer = await stripe.customers.retrieve(subscription.customer);
+    const customerEmail = customer.email;
+    const productKey = inferProductFromSubscription(subscription);
+    
+    if (customerEmail && productKey) {
+      // Remove or expire the entitlement
+      await expireEntitlement(customerEmail, productKey);
+      console.log(`Entitlement expired for ${productKey} → ${customerEmail}`);
+    }
+    
+  } catch (error) {
+    console.error('Error handling subscription cancellation:', error);
+  }
+}
+
+// =============================================================================
+// SUPABASE DATABASE OPERATIONS
+// =============================================================================
+
+async function upsertCustomer(email, name = null) {
+  const { data, error } = await supabase
+    .from('customers')
+    .upsert({ email, name }, { onConflict: 'email' })
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error upserting customer:', error);
     throw error;
   }
+  
+  return data;
+}
+
+async function createOrder(orderData) {
+  const { data, error } = await supabase
+    .from('orders')
+    .insert(orderData)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating order:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+async function createEntitlement(email, skuConfig) {
+  const expiresAt = skuConfig.expires_days 
+    ? new Date(Date.now() + skuConfig.expires_days * 24 * 60 * 60 * 1000).toISOString()
+    : null;
+
+  const { data, error } = await supabase
+    .from('entitlements')
+    .upsert({ 
+      email, 
+      sku: skuConfig.entitlement, 
+      expires_at: expiresAt 
+    }, { onConflict: 'email,sku' })
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating entitlement:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+async function extendEntitlement(email, skuConfig) {
+  const newExpiresAt = skuConfig.expires_days
+    ? new Date(Date.now() + skuConfig.expires_days * 24 * 60 * 60 * 1000).toISOString()
+    : null;
+
+  const { error } = await supabase
+    .from('entitlements')
+    .update({ expires_at: newExpiresAt })
+    .eq('email', email)
+    .eq('sku', skuConfig.entitlement);
+    
+  if (error) {
+    console.error('Error extending entitlement:', error);
+    throw error;
+  }
+}
+
+async function expireEntitlement(email, sku) {
+  const { error } = await supabase
+    .from('entitlements')
+    .update({ expires_at: new Date().toISOString() })
+    .eq('email', email)
+    .eq('sku', sku);
+    
+  if (error) {
+    console.error('Error expiring entitlement:', error);
+    throw error;
+  }
+}
+
+// =============================================================================
+// FULFILLMENT DISPATCH SYSTEM
+// =============================================================================
+
+async function dispatchFulfillment(productKey, skuConfig, purchaseData) {
+  const fulfillmentUrl = `${process.env.URL || 'https://peycheff.com'}/.netlify/functions/fulfill-${skuConfig.fulfillment.replace('_', '-')}`;
+  
+  try {
+    const response = await fetch(fulfillmentUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.FULFILLMENT_SECRET || 'default-secret'}`
+      },
+      body: JSON.stringify({
+        sku: productKey,
+        config: skuConfig,
+        purchase: purchaseData
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Fulfillment failed: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log(`Fulfillment dispatched for ${productKey}:`, result);
+    
+  } catch (error) {
+    console.error(`Fulfillment dispatch failed for ${productKey}:`, error);
+    // Continue - we don't want to fail the webhook for fulfillment issues
+  }
+}
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+function inferProductFromSession(session) {
+  // Try to extract product key from line items or other session data
+  if (session.metadata?.product_key) {
+    return session.metadata.product_key;
+  }
+  
+  // Fallback: try to match by amount (not reliable but better than nothing)
+  const amount = session.amount_total;
+  for (const [sku, config] of Object.entries(SKU_CONFIG)) {
+    // This would need product price lookup - simplified for now
+  }
+  
+  return null;
+}
+
+function inferProductFromSubscription(subscription) {
+  // Extract product key from subscription metadata or price ID mapping
+  if (subscription.metadata?.product_key) {
+    return subscription.metadata.product_key;
+  }
+  
+  // Try to match subscription items to our SKUs
+  const priceId = subscription.items.data[0]?.price?.id;
+  
+  // Map price IDs to product keys (you'd need to maintain this mapping)
+  const priceToSku = {
+    [process.env.VITE_STRIPE_MEMBER_MONTHLY_PRICE_ID]: 'MEMBER_MONTHLY',
+    [process.env.VITE_STRIPE_MEMBER_ANNUAL_PRICE_ID]: 'MEMBER_ANNUAL'
+  };
+  
+  return priceToSku[priceId] || null;
 }

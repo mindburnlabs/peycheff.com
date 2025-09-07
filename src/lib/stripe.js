@@ -5,13 +5,15 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 export { stripePromise };
 
-// Stripe products - complete monetization suite
+// Autopilot product suite - SKU-based naming for automation
 export const STRIPE_PRODUCTS = {
-  STRATEGY_CALL: {
+  // Strategy Calls
+  CALL_60: {
     price: 19900, // $199.00 in cents
     name: 'Strategy Call (60–90 min)',
     description: 'Founder-to-founder strategy call. 60–90 min + one-page action plan (24h). Digital delivery.',
-    priceId: import.meta.env.VITE_STRIPE_STRATEGY_CALL_PRICE_ID,
+    priceId: import.meta.env.VITE_STRIPE_CALL_60_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_CALL_60_PAYMENT_LINK,
     type: 'one_time',
     features: [
       '60-90 minute focused strategy session',
@@ -21,11 +23,13 @@ export const STRIPE_PRODUCTS = {
       'Follow-up Q&A support for 1 week'
     ]
   },
-  SPARRING_SESSION: {
-    price: 50000, // $500.00 in cents (legacy - keeping for existing integration)
-    name: 'Sparring Session (90 min)', 
-    description: 'For founders/operators who need ruthless clarity.',
-    priceId: import.meta.env.VITE_STRIPE_SPARRING_PRICE_ID,
+  // Call Packs
+  CALL_PACK: {
+    price: 50000, // $500.00 in cents
+    name: 'Strategy Call Pack (3 calls)', 
+    description: 'Three strategy calls with async review between sessions.',
+    priceId: import.meta.env.VITE_STRIPE_CALL_PACK_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_CALL_PACK_PAYMENT_LINK,
     type: 'one_time',
     features: [
       '90-minute deep-dive strategic session',
@@ -35,133 +39,178 @@ export const STRIPE_PRODUCTS = {
       '1 week of follow-up support'
     ]
   },
-  SPARRING_PACK: {
-    price: 59900, // $599.00 in cents
-    name: 'Sparring Pack (3 calls)',
-    description: 'Three focused working sessions with async review between calls. Digital delivery.',
-    priceId: import.meta.env.VITE_STRIPE_SPARRING_PACK_PRICE_ID,
+  // 30-Day Packs
+  PACK_30DAY: {
+    price: 3900, // $39.00 in cents
+    name: '30-Day Idea→Product Sprint',
+    description: 'Personalized 30-day operating cadence. PDF/MDX + checklists.',
+    priceId: import.meta.env.VITE_STRIPE_PACK_30DAY_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_PACK_30DAY_PAYMENT_LINK,
     type: 'one_time',
     features: [
       'Three 90-minute strategic sessions',
       'Async review and feedback between calls',
-      'Session recordings and transcripts',
-      'Comprehensive action plan after each session',
-      'Extended follow-up support for 2 weeks'
+      '30-day personalized framework',
+      'AI-generated based on your stack/team/timeline',
+      'Instant download after 3-question form'
     ]
   },
-  OPERATOR_PACK: {
-    price: 3900, // $39.00 in cents
-    name: 'Operator Pack: 30-Day Idea→Product Sprint',
-    description: 'My 30-day operating cadence (PDF/MDX, checklists, calendar). Digital download.',
-    priceId: import.meta.env.VITE_STRIPE_OPERATOR_PACK_PRICE_ID,
+  // Kits
+  KIT_AUTOMATION: {
+    price: 7900, // $79.00 in cents
+    name: 'Micro-Automation Kit',
+    description: 'Four automation playbooks with scripts/prompts/JSON. Digital download.',
+    priceId: import.meta.env.VITE_STRIPE_KIT_AUTOMATION_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_KIT_AUTOMATION_PAYMENT_LINK,
     type: 'one_time',
     features: [
       '30-day sprint framework (PDF + MDX)',
-      'Daily and weekly checklists',
-      'Calendar templates and time-blocking guide',
-      'Decision frameworks and prioritization tools',
-      'Instant download after payment'
+      '4 complete automation playbooks',
+      'Ready-to-use scripts and templates',
+      'AI prompts and configurations',
+      'Instant personalized generation'
     ]
   },
-  AUTOMATION_KIT: {
-    price: 7900, // $79.00 in cents
-    name: 'Micro-Automation Kit (Bundle of 4)',
-    description: 'Four small, useful automation playbooks (scripts/prompts/JSON). Digital download.',
-    priceId: import.meta.env.VITE_STRIPE_AUTOMATION_KIT_PRICE_ID,
+  KIT_DIAGRAMS: {
+    price: 5900, // $59.00 in cents
+    name: 'Diagram Library Kit',
+    description: '12 high-res system diagrams (SVG/PNG). Team license included.',
+    priceId: import.meta.env.VITE_STRIPE_KIT_DIAGRAMS_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_KIT_DIAGRAMS_PAYMENT_LINK,
     type: 'one_time',
     features: [
       '4 complete automation playbooks',
-      'Ready-to-use scripts and templates',
-      'AI prompts and JSON configurations',
-      'Step-by-step implementation guides',
-      'Lifetime updates to the kit'
-    ]
-  },
-  DIAGRAM_LIBRARY: {
-    price: 5900, // $59.00 in cents
-    name: 'Diagram Library (Team License)',
-    description: '12 high-res system diagrams (SVG/PNG). Licensed for internal team use.',
-    priceId: import.meta.env.VITE_STRIPE_DIAGRAM_LIBRARY_PRICE_ID,
-    type: 'one_time',
-    features: [
       '12 high-resolution system diagrams',
-      'SVG and PNG formats included',
-      'Licensed for internal team use',
-      'Covers architecture, workflows, and processes',
-      'Editable source files provided'
+      'SVG and PNG formats',
+      'Team license for internal use',
+      'Editable source files included'
     ]
   },
-  BUILD_NOTES_MONTHLY: {
+  // Memberships
+  MEMBER_MONTHLY: {
     price: 900, // $9.00 in cents
     name: 'Build Notes Membership',
-    description: '2 operator memos/month, early access to Kits. Email delivery.',
-    priceId: import.meta.env.VITE_STRIPE_BUILD_NOTES_MONTHLY_PRICE_ID,
+    description: '2 operator memos/month + early access to Kits. Email delivery.',
+    priceId: import.meta.env.VITE_STRIPE_MEMBER_MONTHLY_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_MEMBER_MONTHLY_PAYMENT_LINK,
     type: 'subscription',
     features: [
+      '12 high-resolution system diagrams',
       '2 operator memos delivered monthly',
-      'Early access to new kits and playbooks',
+      'Early access to all new kits',
       'Private member-only content',
-      'Email delivery and archive access',
       'Cancel anytime'
     ]
   },
-  BUILD_NOTES_YEARLY: {
+  MEMBER_ANNUAL: {
     price: 9000, // $90.00 in cents
-    name: 'Build Notes Membership (Yearly)',
-    description: '2 operator memos/month, early access to Kits. Email delivery. Save $18/year.',
-    priceId: import.meta.env.VITE_STRIPE_BUILD_NOTES_YEARLY_PRICE_ID,
+    name: 'Build Notes Membership (Annual)',
+    description: '2 operator memos/month + early Kit access. Save $18/year.',
+    priceId: import.meta.env.VITE_STRIPE_MEMBER_ANNUAL_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_MEMBER_ANNUAL_PAYMENT_LINK,
     type: 'subscription',
-    originalPrice: 10800, // $108 (12 months at $9)
     features: [
       '24 operator memos per year',
-      'Early access to all new products',
-      'Private member community access',
-      'Archive of all past content',
-      'Save $18 compared to monthly billing'
+      'Early access to all products',
+      'Member community access',
+      'Save $18 vs monthly billing'
     ]
   },
+  // Office Hours
   OFFICE_HOURS: {
     price: 4900, // $49.00 in cents
-    name: 'Office Hours Seat (Monthly)',
-    description: '90-min small-group session (max 10). Digital attendance.',
+    name: 'Office Hours Seat',
+    description: '90-min small-group session (max 10). Next available slot.',
     priceId: import.meta.env.VITE_STRIPE_OFFICE_HOURS_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_OFFICE_HOURS_PAYMENT_LINK,
+    type: 'one_time',
+    features: [
+      '90-minute small group session',
+      'Max 10 participants',
+      'Q&A format with real-time feedback',
+      'Session recording provided',
+      'Guaranteed seat in next available slot'
+    ]
+  },
+  // Deposits
+  DEPOSIT_AUDIT: {
+    price: 50000, // $500.00 in cents
+    name: 'Systems Audit Deposit',
+    description: 'Reserve 10-day audit slot. Applied to $5K total.',
+    priceId: import.meta.env.VITE_STRIPE_DEPOSIT_AUDIT_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_DEPOSIT_AUDIT_PAYMENT_LINK,
     type: 'one_time',
     features: [
       '90-minute small group session (max 10 people)',
-      'Digital attendance via video call',
-      'Q&A format with real-time feedback',
-      'Session recording provided afterward',
-      'Next available slot guaranteed'
-    ]
-  },
-  SYSTEMS_AUDIT_DEPOSIT: {
-    price: 50000, // $500.00 in cents
-    name: 'Systems Audit (Deposit)',
-    description: 'Non-refundable deposit to reserve a 10-day audit slot. Digital service.',
-    priceId: import.meta.env.VITE_STRIPE_SYSTEMS_AUDIT_DEPOSIT_PRICE_ID,
-    type: 'one_time',
-    features: [
-      'Reserve your 10-day systems audit slot',
       'Comprehensive team process analysis',
       'Redesigned workflows and metrics',
       'Implementation roadmap included',
-      'Applied toward full $5,000 project cost'
+      'Applied to full $5K project cost'
     ]
   },
-  BUILD_SPRINT_DEPOSIT: {
-    price: 100000, // $1000.00 in cents
-    name: 'Build Sprint (Slot Deposit)',
-    description: 'Deposit to reserve a 30-day build sprint slot. Applied to total.',
-    priceId: import.meta.env.VITE_STRIPE_BUILD_SPRINT_DEPOSIT_PRICE_ID,
+  DEPOSIT_SPRINT: {
+    price: 100000, // $1,000.00 in cents
+    name: 'Build Sprint Deposit',
+    description: 'Reserve 30-day build sprint slot. Applied to $25K total.',
+    priceId: import.meta.env.VITE_STRIPE_DEPOSIT_SPRINT_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_DEPOSIT_SPRINT_PAYMENT_LINK,
     type: 'one_time',
     features: [
-      'Reserve your 30-day build sprint slot',
+      'Reserve your 10-day systems audit slot',
       'Usable v1 product shipped',
-      'Small team execution',
+      'Small team execution model',
       'Complete rollout documentation',
-      'Applied toward full $25,000 project cost'
+      'Applied to full $25K project cost'
     ]
   }
+};
+
+// Payment Link integration for 1-click purchases
+export const redirectToPaymentLink = (productKey) => {
+  const product = STRIPE_PRODUCTS[productKey];
+  
+  if (!product?.paymentLink) {
+    console.error(`No payment link configured for ${productKey}`);
+    return { success: false, error: 'Payment link not configured' };
+  }
+  
+  // Track payment link click
+  trackEvent(EVENTS.STRIPE_PAYMENT_LINK_CLICK, {
+    product_key: productKey,
+    product_name: product.name,
+    product_price: product.price
+  });
+  
+  window.location.href = product.paymentLink;
+  return { success: true };
+};
+
+// Legacy product mappings (for backward compatibility)
+export const LEGACY_PRODUCTS = {
+  STRATEGY_CALL: 'CALL_60',
+  SPARRING_SESSION: 'CALL_PACK',
+  SPARRING_PACK: 'CALL_PACK',
+  OPERATOR_PACK: 'PACK_30DAY',
+  AUTOMATION_KIT: 'KIT_AUTOMATION',
+  DIAGRAM_LIBRARY: 'KIT_DIAGRAMS',
+  BUILD_NOTES_MONTHLY: 'MEMBER_MONTHLY',
+  BUILD_NOTES_YEARLY: 'MEMBER_ANNUAL',
+  SYSTEMS_AUDIT_DEPOSIT: 'DEPOSIT_AUDIT',
+  BUILD_SPRINT_DEPOSIT: 'DEPOSIT_SPRINT'
+};
+
+// Get product by key with legacy fallback
+export const getProduct = (productKey) => {
+  if (STRIPE_PRODUCTS[productKey]) {
+    return STRIPE_PRODUCTS[productKey];
+  }
+  
+  const mappedKey = LEGACY_PRODUCTS[productKey];
+  if (mappedKey && STRIPE_PRODUCTS[mappedKey]) {
+    return STRIPE_PRODUCTS[mappedKey];
+  }
+  
+  return null;
 };
 
 // Create Stripe checkout session using Stripe's client-side checkout

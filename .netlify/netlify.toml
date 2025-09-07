@@ -1,26 +1,14 @@
+functionsDirectory = "/Users/ivan/Code/personal/peycheff.com/netlify/functions"
+functionsDirectoryOrigin = "config-v1"
 headersOrigin = "config"
 redirectsOrigin = "config"
-
-[forms]
-
-[forms.contact]
-action = "/contact"
-
-[functions]
-
-[functions."*"]
-
-[[plugins]]
-origin = "ui"
-package = "@netlify/plugin-lighthouse"
-
-[plugins.inputs]
 
 [build]
 publish = "/Users/ivan/Code/personal/peycheff.com/build"
 publishOrigin = "config"
 commandOrigin = "config"
 command = "npm run build"
+functions = "/Users/ivan/Code/personal/peycheff.com/netlify/functions"
 
 [build.environment]
 NODE_VERSION = "20"
@@ -36,6 +24,22 @@ NODE_VERSION = "20"
 [build.processing.js]
 
 [build.services]
+
+[forms]
+
+[forms.contact]
+action = "/contact"
+
+[functions]
+
+[functions."*"]
+external_node_modules = ["@supabase/supabase-js", "resend", "stripe"]
+
+[[plugins]]
+origin = "ui"
+package = "@netlify/plugin-lighthouse"
+
+[plugins.inputs]
 
 [[headers]]
 for = "/*"

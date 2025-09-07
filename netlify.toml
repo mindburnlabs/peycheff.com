@@ -42,14 +42,9 @@
   action = "/contact"
   
 # Serverless functions configuration
-[[functions]]
-  name = "contact-inquiry"
-  source = "netlify/functions/contact-inquiry.js"
-  
-[[functions]]
-  name = "newsletter-subscribe"
-  source = "netlify/functions/newsletter-subscribe.js"
-  
-[[functions]]
-  name = "stripe-webhook"
-  source = "netlify/functions/stripe-webhook.js"
+[functions]
+  # All functions will be deployed from netlify/functions/
+  external_node_modules = ["@supabase/supabase-js", "resend", "stripe"]
+
+# Scheduled functions (configure in Netlify UI or use GitHub Actions)
+# For now, use manual trigger: POST /.netlify/functions/trigger-autopublish
