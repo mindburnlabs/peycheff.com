@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useReducedMotion } from '../hooks/useReducedMotion';
+import useReducedMotion from '../hooks/useReducedMotion';
 
 const Advisory = () => {
   const reducedMotion = useReducedMotion();

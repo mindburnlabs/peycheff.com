@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useReducedMotion } from '../hooks/useReducedMotion';
+import useReducedMotion from '../hooks/useReducedMotion';
 
 const Work = () => {
   const reducedMotion = useReducedMotion();
