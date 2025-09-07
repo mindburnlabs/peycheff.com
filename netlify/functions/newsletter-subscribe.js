@@ -1,12 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
-import { validateEmailConfig, sendEmail, EMAIL_TEMPLATES } from './lib/email-service.js';
+const { createClient } = require('@supabase/supabase-js');
+const { validateEmailConfig, sendEmail, EMAIL_TEMPLATES } = require('./lib/email-service');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',

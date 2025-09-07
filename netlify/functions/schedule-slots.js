@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { emailService } = require('./lib/email-service');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -264,6 +265,26 @@ async function bookSlot({ slot_id, customer_email, customer_name, order_id, note
 
   // Generate calendar event
   const calendarEvent = generateCalendarEvent(bookedSlot);
+  
+  // Send booking confirmation email
+  try {
+    const emailResult = await emailService.sendBookingConfirmation(
+      bookedSlot.customer_email,
+      {
+        customer_name: bookedSlot.customer_name,
+        service_type: bookedSlot.service_type,
+        start_time: bookedSlot.start_time,
+        end_time: bookedSlot.end_time,
+        notes: bookedSlot.notes
+      },
+      calendarEvent
+    );
+    
+    console.log('Booking confirmation email sent:', emailResult);
+  } catch (emailError) {
+    console.error('Failed to send booking confirmation email:', emailError);
+    // Don't fail the booking if email fails
+  }
 
   return {
     statusCode: 200,

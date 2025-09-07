@@ -1,6 +1,6 @@
-import { validateEmailConfig, sendEmail, EMAIL_TEMPLATES } from './lib/email-service.js';
+const { validateEmailConfig, sendEmail, EMAIL_TEMPLATES } = require('./lib/email-service');
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',

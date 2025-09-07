@@ -1,10 +1,10 @@
-import { Resend } from 'resend';
+const { Resend } = require('resend');
 
 // Initialize Resend with fallback for testing
 const resend = new Resend(process.env.RESEND_API_KEY || 'test_key');
 
 // Email templates
-export const EMAIL_TEMPLATES = {
+const EMAIL_TEMPLATES = {
   CONTACT_INQUIRY: {
     to: 'ivan@peycheff.com',
     subject: (inquiry) => `New Inquiry from ${inquiry.name} - ${inquiry.company || 'Individual'}`,
@@ -254,19 +254,103 @@ export const EMAIL_TEMPLATES = {
         </div>
       </div>
     `
+  },
+
+  BOOKING_CONFIRMATION: {
+    subject: (booking) => `${booking.service_type} confirmed - ${new Date(booking.start_time).toLocaleDateString()}`,
+    html: (booking) => {
+      const serviceNames = {
+        'CALL_60': '60-Minute Strategy Call',
+        'CALL_30': '30-Minute Quick Call',
+        'SPARRING': 'Strategy Sparring Session'
+      };
+      
+      const serviceName = serviceNames[booking.service_type] || 'Strategy Session';
+      const formattedDate = new Date(booking.start_time).toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      const formattedTime = new Date(booking.start_time).toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        timeZoneName: 'short'
+      });
+      
+      return `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
+            <div style="background: rgba(255,255,255,0.2); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 24px;">📅</div>
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">Session Booked!</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 15px 0 0 0; font-size: 18px;">Looking forward to our conversation, ${booking.customer_name}.</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin-bottom: 25px;">
+            <h2 style="color: #1a1a1a; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">${serviceName}</h2>
+            <div style="background: white; padding: 20px; border-radius: 6px; border: 1px solid #e5e7eb;">
+              <div style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">${formattedDate}</div>
+              <div style="font-size: 16px; color: #6b7280; margin-bottom: 15px;">${formattedTime}</div>
+              ${booking.notes ? `
+                <div style="border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 15px;">
+                  <div style="font-size: 14px; color: #6b7280; margin-bottom: 5px;"><strong>Your notes:</strong></div>
+                  <div style="font-size: 14px; color: #374151; line-height: 1.5;">${booking.notes}</div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          
+          <div style="background: white; padding: 25px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 25px;">
+            <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">Before our session:</h2>
+            <ul style="color: #374151; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li style="margin-bottom: 8px;">Add this meeting to your calendar (see attachment)</li>
+              <li style="margin-bottom: 8px;">I'll send the video call link 24 hours before</li>
+              <li style="margin-bottom: 8px;">Prepare any specific questions you'd like to discuss</li>
+              <li>Bring relevant materials if helpful (docs, prototypes, data)</li>
+            </ul>
+          </div>
+          
+          <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+            <h3 style="color: #92400e; margin: 0 0 10px 0; font-size: 16px; font-weight: 600;">Need to reschedule?</h3>
+            <p style="color: #92400e; margin: 0; font-size: 14px;">Just reply to this email at least 24 hours before our session.</p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://peycheff.com/contact" 
+               style="background: #0A84FF; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+              Contact Me
+            </a>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+            <p style="margin: 0 0 10px 0;">Calendar file is attached. Looking forward to our conversation!</p>
+            <p style="margin: 0;">
+              Ivan Peycheff • <a href="mailto:ivan@peycheff.com" style="color: #0A84FF; text-decoration: none;">ivan@peycheff.com</a>
+            </p>
+          </div>
+        </div>
+      `;
+    }
   }
 };
 
 // Email sending utility
-export const sendEmail = async (emailData) => {
+const sendEmail = async (emailData) => {
   try {
-    const data = await resend.emails.send({
+    const emailPayload = {
       from: 'Ivan Peycheff <ivan@peycheff.com>',
       to: emailData.to,
       subject: emailData.subject,
       html: emailData.html,
       replyTo: emailData.replyTo || 'ivan@peycheff.com'
-    });
+    };
+    
+    // Add attachments if provided
+    if (emailData.attachments && emailData.attachments.length > 0) {
+      emailPayload.attachments = emailData.attachments;
+    }
+    
+    const data = await resend.emails.send(emailPayload);
     
     console.log('Email sent successfully:', data);
     return { success: true, data };
@@ -277,7 +361,7 @@ export const sendEmail = async (emailData) => {
 };
 
 // Helper to validate email configuration
-export const validateEmailConfig = () => {
+const validateEmailConfig = () => {
   if (!process.env.RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY environment variable is required');
   }
@@ -287,4 +371,84 @@ export const validateEmailConfig = () => {
   }
   
   return true;
+};
+
+// Convenience functions for specific email types
+const emailService = {
+  // Send purchase confirmation
+  sendPurchaseConfirmation: async (customerEmail, orderData) => {
+    const template = EMAIL_TEMPLATES.PURCHASE_CONFIRMATION;
+    return sendEmail({
+      to: customerEmail,
+      subject: template.subject(orderData),
+      html: template.html(orderData)
+    });
+  },
+
+  // Send newsletter welcome
+  sendNewsletterWelcome: async (email) => {
+    const template = EMAIL_TEMPLATES.NEWSLETTER_WELCOME;
+    return sendEmail({
+      to: email,
+      subject: template.subject,
+      html: template.html({ email })
+    });
+  },
+
+  // Send booking confirmation with calendar attachment
+  sendBookingConfirmation: async (customerEmail, bookingData, calendarFile = null) => {
+    const template = EMAIL_TEMPLATES.BOOKING_CONFIRMATION;
+    const emailData = {
+      to: customerEmail,
+      subject: template.subject(bookingData),
+      html: template.html(bookingData)
+    };
+    
+    // Add calendar attachment if provided
+    if (calendarFile) {
+      emailData.attachments = [{
+        filename: calendarFile.filename || 'meeting.ics',
+        content: calendarFile.ics,
+        type: 'text/calendar'
+      }];
+    }
+    
+    return sendEmail(emailData);
+  },
+
+  // Send contact form notifications
+  sendContactNotification: async (inquiryData) => {
+    const template = EMAIL_TEMPLATES.CONTACT_INQUIRY;
+    return sendEmail({
+      to: template.to,
+      subject: template.subject(inquiryData),
+      html: template.html(inquiryData)
+    });
+  },
+
+  sendContactConfirmation: async (customerEmail, inquiryData) => {
+    const template = EMAIL_TEMPLATES.CONTACT_CONFIRMATION;
+    return sendEmail({
+      to: customerEmail,
+      subject: template.subject,
+      html: template.html(inquiryData)
+    });
+  },
+
+  // Test email function
+  sendTestEmail: async (email) => {
+    const template = EMAIL_TEMPLATES.NEWSLETTER_WELCOME;
+    return sendEmail({
+      to: email,
+      subject: 'Test email from peycheff.com',
+      html: template.html({ email })
+    });
+  }
+};
+
+module.exports = {
+  EMAIL_TEMPLATES,
+  sendEmail,
+  validateEmailConfig,
+  emailService
 };

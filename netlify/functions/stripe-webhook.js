@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+const { emailService } = require('./lib/email-service');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -392,10 +393,64 @@ async function dispatchFulfillment(productKey, skuConfig, purchaseData) {
     const result = await response.json();
     console.log(`Fulfillment dispatched for ${productKey}:`, result);
     
+    // Send purchase confirmation email
+    await sendPurchaseConfirmationEmail(productKey, skuConfig, purchaseData);
+    
   } catch (error) {
     console.error(`Fulfillment dispatch failed for ${productKey}:`, error);
     // Continue - we don't want to fail the webhook for fulfillment issues
   }
+}
+
+// =============================================================================
+// EMAIL NOTIFICATIONS
+// =============================================================================
+
+async function sendPurchaseConfirmationEmail(productKey, skuConfig, purchaseData) {
+  try {
+    const purchaseEmailData = {
+      customer_name: 'Valued Customer', // We could extract this from Stripe customer data
+      product_name: skuConfig.name,
+      product_price: `$${(purchaseData.amount / 100).toFixed(2)}`,
+      product_description: getProductDescription(productKey),
+      order_id: purchaseData.order_id,
+      amount: purchaseData.amount,
+      session_id: purchaseData.session_id,
+      product_type: skuConfig.type
+    };
+
+    const emailResult = await emailService.sendPurchaseConfirmation(
+      purchaseData.customer_email,
+      purchaseEmailData
+    );
+
+    if (emailResult.success) {
+      console.log(`Purchase confirmation email sent for ${productKey} to ${purchaseData.customer_email}`);
+    } else {
+      console.error(`Failed to send purchase confirmation email:`, emailResult.error);
+    }
+
+  } catch (error) {
+    console.error('Error sending purchase confirmation email:', error);
+    // Don't throw - email failures shouldn't break the webhook
+  }
+}
+
+function getProductDescription(productKey) {
+  const descriptions = {
+    'CALL_60': 'One-on-one strategy session to tackle your biggest product challenges.',
+    'CALL_PACK': 'Three strategy sessions to accelerate your product development.',
+    'PACK_30DAY': 'Complete playbook and framework for shipping your idea in 30 days.',
+    'KIT_AUTOMATION': 'Collection of micro-automation scripts and workflows.',
+    'KIT_DIAGRAMS': 'Professional diagram templates and design resources.',
+    'MEMBER_MONTHLY': 'Monthly access to exclusive content and community.',
+    'MEMBER_ANNUAL': 'Annual membership with all benefits and bonuses.',
+    'OFFICE_HOURS': 'Group session access for live Q&A and feedback.',
+    'DEPOSIT_AUDIT': 'Systems audit engagement to optimize your operations.',
+    'DEPOSIT_SPRINT': 'Build sprint engagement to ship your next feature.'
+  };
+  
+  return descriptions[productKey] || 'Thank you for your purchase!';
 }
 
 // =============================================================================

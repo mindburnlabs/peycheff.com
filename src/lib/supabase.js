@@ -9,6 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const TABLES = {
   SUBSCRIBERS: 'subscribers',
   INQUIRIES: 'inquiries',
+  USAGE_COUNTERS: 'usage_counters',
 };
 
 // Helper functions
