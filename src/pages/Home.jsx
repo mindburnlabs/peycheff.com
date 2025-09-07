@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import SEO from '../components/SEO';
@@ -10,6 +10,38 @@ const Home = () => {
   const [proofRef, proofVisible] = useScrollAnimation(0.3);
   const [workRef, workVisible] = useScrollAnimation(0.2);
   const [advisoryRef, advisoryVisible] = useScrollAnimation(0.2);
+
+  const [goal, setGoal] = useState('Ship a usable v1 in 30 days');
+  const [stack, setStack] = useState('React + Node + Supabase');
+  const [preview, setPreview] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
+  const runPreview = async (e) => {
+    e?.preventDefault?.();
+    try {
+      setLoadingPreview(true);
+      setPreview(null);
+      const res = await fetch('/.netlify/functions/preview-sprint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goal, stack })
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.success) throw new Error(data?.error || 'Preview failed');
+      setPreview(data);
+    } catch (err) {
+      console.error('Preview error', err);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const startCheckout = async () => {
+    const { createCheckoutSession } = await import('../lib/stripe');
+    await createCheckoutSession('PACK_30DAY', {
+      context: { goal, stack },
+    }, 'AUDIT_PRO');
+  };
 
   return (
     <>
@@ -43,29 +75,75 @@ const Home = () => {
           </motion.div>
           
           <motion.div 
-            className="flex flex-wrap items-center gap-4"
+            className="flex flex-col gap-6"
             variants={scrollAnimationVariants.fadeInUp}
           >
-            <Link 
-              to="/advisory" 
-              className="btn-primary hover-spring"
-            >
-              Work with me
-            </Link>
-            <Link 
-              to="/notes" 
-              className="btn-ghost hover-spring"
-            >
-              Read my notes
-            </Link>
-            <Tooltip content="Get notified about new posts and updates">
-              <button className="btn-ghost hover-spring">
-                Subscribe
+            <form onSubmit={runPreview} className="grid md:grid-cols-3 gap-3 max-w-3xl">
+              <input
+                type="text"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="Your goal"
+                className="bg-input border border-border rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent placeholder-muted-foreground"
+                required
+              />
+              <input
+                type="text"
+                value={stack}
+                onChange={(e) => setStack(e.target.value)}
+                placeholder="Your stack"
+                className="bg-input border border-border rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent placeholder-muted-foreground"
+                required
+              />
+              <button
+                type="submit"
+                className="btn-primary hover-spring"
+                disabled={loadingPreview}
+              >
+                {loadingPreview ? 'Generating…' : 'Try 30‑second preview'}
               </button>
-            </Tooltip>
+            </form>
+
+            <div className="flex items-center gap-4">
+              <button onClick={startCheckout} className="btn-primary hover-spring">
+                Generate my plan
+              </button>
+              <span className="text-sm text-muted-foreground">Preview shows Week‑1 only.</span>
+            </div>
           </motion.div>
         </motion.div>
       </section>
+
+      {/* Preview render */}
+      {preview && (
+        <section className="px-6 pt-0 pb-12">
+          <div className="max-w-container mx-auto">
+            <div className="relative border border-border/30 rounded-xl p-6 bg-surface/40 overflow-hidden">
+              <div className="absolute top-4 right-4 text-xs px-2 py-1 rounded bg-accent/10 text-accent">
+                {preview.watermark}
+              </div>
+              <h3 className="text-h3 mb-4">Week‑1 outline</h3>
+              <p className="text-muted-foreground mb-6">Goal: {preview.goal} • Stack: {preview.stack}</p>
+              <div className="grid md:grid-cols-2 gap-6">
+                {preview.week1?.map((d, i) => (
+                  <div key={i} className="rounded-lg border border-border/30 p-4 bg-background/40">
+                    <div className="font-semibold mb-2">{d.name}</div>
+                    <ul className="list-disc pl-5 space-y-1 text-text-tertiary">
+                      {d.bullets.map((b, j) => (
+                        <li key={j}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button onClick={startCheckout} className="btn-primary hover-spring">Generate my plan</button>
+                <button onClick={runPreview} className="btn-ghost hover-spring" disabled={loadingPreview}>{loadingPreview ? 'Refreshing…' : 'Refresh preview'}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Proof - Clean facts with subtle animations */}
       <section className="px-6 py-32 relative">

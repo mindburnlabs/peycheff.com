@@ -1,6 +1,8 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 const { emailService } = require('./lib/email-service');
+const { aiService } = require('./lib/ai-service');
+const { pdfService } = require('./lib/pdf-service');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -212,7 +214,8 @@ async function handleCheckoutCompleted(session, eventId) {
       customer_email: customerEmail,
       session_id: session.id,
       order_id: order.id,
-      amount: amount
+      amount: amount,
+      metadata: session.metadata || {}
     });
 
     console.log(`Autopilot fulfillment dispatched for ${productKey} → ${customerEmail}`);

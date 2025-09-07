@@ -1,0 +1,207 @@
+{
+  "roles": [
+    {
+      "id": "founder",
+      "title": "Founder",
+      "variations": ["startup-founder", "technical-founder", "first-time-founder", "serial-founder"],
+      "pain_points": ["overwhelmed by complexity", "paralyzed by endless options", "wasting time on theory"],
+      "value_prop": "Turn your vision into a shippable v1 in 30 days"
+    },
+    {
+      "id": "developer",
+      "title": "Developer",
+      "variations": ["full-stack-developer", "frontend-developer", "backend-developer", "solo-developer"],
+      "pain_points": ["building without direction", "feature creep", "perfectionism paralysis"],
+      "value_prop": "Skip the overthinking - get a battle-tested development roadmap"
+    },
+    {
+      "id": "product-manager",
+      "title": "Product Manager",
+      "variations": ["senior-pm", "junior-pm", "technical-pm", "growth-pm"],
+      "pain_points": ["coordinating scattered teams", "unclear priorities", "missing deadlines"],
+      "value_prop": "Align your team around a proven 30-day execution framework"
+    },
+    {
+      "id": "designer",
+      "title": "Designer",
+      "variations": ["product-designer", "ux-designer", "design-founder", "freelance-designer"],
+      "pain_points": ["designing in isolation", "unclear requirements", "endless revisions"],
+      "value_prop": "Design with purpose - get a clear product blueprint first"
+    },
+    {
+      "id": "consultant",
+      "title": "Consultant",
+      "variations": ["business-consultant", "strategy-consultant", "independent-consultant", "agency-owner"],
+      "pain_points": ["clients want quick results", "proving value fast", "scaling delivery"],
+      "value_prop": "Deliver proven frameworks that show immediate client results"
+    },
+    {
+      "id": "cto",
+      "title": "CTO",
+      "variations": ["startup-cto", "technical-lead", "engineering-manager", "head-of-engineering"],
+      "pain_points": ["technical debt", "team coordination", "delivery pressure"],
+      "value_prop": "Ship faster with systematic technical planning and execution"
+    }
+  ],
+  "stacks": [
+    {
+      "id": "react-node",
+      "title": "React + Node.js",
+      "primary": "React/Node.js",
+      "db": "PostgreSQL",
+      "deployment": "Vercel/Railway",
+      "testing": "Jest/Vitest",
+      "description": "Full-stack JavaScript with React frontend and Node.js backend"
+    },
+    {
+      "id": "nextjs",
+      "title": "Next.js",
+      "primary": "Next.js",
+      "db": "Prisma/Supabase",
+      "deployment": "Vercel",
+      "testing": "Jest/Playwright",
+      "description": "Full-stack React framework with server-side rendering"
+    },
+    {
+      "id": "python-django",
+      "title": "Python + Django",
+      "primary": "Python/Django",
+      "db": "PostgreSQL",
+      "deployment": "Railway/DigitalOcean",
+      "testing": "pytest",
+      "description": "Python web framework with rapid development capabilities"
+    },
+    {
+      "id": "ruby-rails",
+      "title": "Ruby on Rails",
+      "primary": "Ruby on Rails",
+      "db": "PostgreSQL",
+      "deployment": "Heroku/Railway",
+      "testing": "RSpec",
+      "description": "Convention over configuration web framework"
+    },
+    {
+      "id": "vue-nuxt",
+      "title": "Vue.js + Nuxt",
+      "primary": "Vue.js/Nuxt",
+      "db": "Supabase",
+      "deployment": "Netlify/Vercel",
+      "testing": "Vitest",
+      "description": "Progressive Vue.js framework with universal applications"
+    },
+    {
+      "id": "laravel-php",
+      "title": "Laravel + PHP",
+      "primary": "Laravel/PHP",
+      "db": "MySQL/PostgreSQL",
+      "deployment": "DigitalOcean/AWS",
+      "testing": "PHPUnit",
+      "description": "Elegant PHP framework for web artisans"
+    }
+  ],
+  "niches": [
+    {
+      "id": "saas",
+      "title": "SaaS Platform",
+      "variations": ["b2b-saas", "b2c-saas", "micro-saas", "vertical-saas"],
+      "examples": ["analytics dashboard", "CRM system", "project management tool", "automation platform"],
+      "key_features": ["user authentication", "subscription billing", "data visualization", "API integrations"]
+    },
+    {
+      "id": "ecommerce",
+      "title": "E-commerce",
+      "variations": ["online-store", "marketplace", "subscription-box", "digital-products"],
+      "examples": ["online clothing store", "digital marketplace", "subscription service", "course platform"],
+      "key_features": ["payment processing", "inventory management", "order fulfillment", "customer accounts"]
+    },
+    {
+      "id": "content-platform",
+      "title": "Content Platform",
+      "variations": ["blog-platform", "cms", "publishing-tool", "media-platform"],
+      "examples": ["publishing platform", "content management system", "creator tools", "media library"],
+      "key_features": ["content creation", "user-generated content", "media management", "SEO optimization"]
+    },
+    {
+      "id": "productivity",
+      "title": "Productivity Tool",
+      "variations": ["task-management", "time-tracking", "collaboration", "automation"],
+      "examples": ["task manager", "time tracker", "team collaboration tool", "workflow automation"],
+      "key_features": ["task organization", "team collaboration", "progress tracking", "integrations"]
+    },
+    {
+      "id": "fintech",
+      "title": "Fintech App",
+      "variations": ["payment-app", "budgeting-tool", "investment-platform", "expense-tracker"],
+      "examples": ["expense tracker", "investment app", "payment processor", "budgeting tool"],
+      "key_features": ["secure transactions", "financial data", "compliance", "real-time updates"]
+    },
+    {
+      "id": "healthcare",
+      "title": "Healthcare Platform",
+      "variations": ["telemedicine", "patient-portal", "health-tracking", "medical-records"],
+      "examples": ["telemedicine app", "patient portal", "health tracker", "appointment system"],
+      "key_features": ["HIPAA compliance", "patient data", "appointment scheduling", "secure messaging"]
+    },
+    {
+      "id": "education",
+      "title": "Education Platform",
+      "variations": ["e-learning", "course-platform", "student-portal", "tutoring-app"],
+      "examples": ["online course platform", "student management system", "tutoring app", "learning tracker"],
+      "key_features": ["course delivery", "progress tracking", "student engagement", "assessment tools"]
+    },
+    {
+      "id": "social",
+      "title": "Social Platform",
+      "variations": ["community", "networking", "messaging", "social-media"],
+      "examples": ["community platform", "professional network", "messaging app", "social feed"],
+      "key_features": ["user profiles", "social interactions", "content feeds", "messaging system"]
+    }
+  ],
+  "templates": {
+    "meta": {
+      "title_pattern": "{role} {stack} {niche} - 30-Day Sprint Plan | Ivan Peycheff",
+      "description_pattern": "Get a personalized 30-day development plan for building your {niche} with {stack}. Perfect for {role}s who want to ship fast without the guesswork."
+    },
+    "headlines": {
+      "primary": "Turn your {niche} idea into a shippable {stack} product in 30 days",
+      "secondary": "Get a personalized sprint plan built for {role}s using {stack}",
+      "cta": "Generate my {niche} plan"
+    },
+    "value_props": [
+      "No more analysis paralysis - get a clear 30-day roadmap",
+      "Battle-tested for {stack} development",
+      "Designed specifically for {role}s building {niche} products",
+      "Skip months of planning - start building in days"
+    ],
+    "pain_points": {
+      "founder": "Tired of endless research and planning without shipping?",
+      "developer": "Building features without knowing if they matter?",
+      "product-manager": "Struggling to align your team around priorities?",
+      "designer": "Designing without clear product requirements?",
+      "consultant": "Need proven frameworks that deliver quick client wins?",
+      "cto": "Under pressure to ship faster with limited resources?"
+    },
+    "social_proof": [
+      "Used by 200+ {role}s to ship their first version",
+      "Proven framework that's generated $2M+ in customer value",
+      "The same system I used to ship and sell $2.5M in 30 minutes"
+    ]
+  },
+  "content_variations": {
+    "urgency": [
+      "Most {role}s waste 3-6 months planning what could be built in 30 days",
+      "While you're researching, your competitors are shipping",
+      "The market won't wait for your perfect plan"
+    ],
+    "authority": [
+      "I've shipped products that generated $2.5M in 30 minutes",
+      "I've helped 200+ {role}s turn ideas into revenue",
+      "My frameworks are battle-tested across 50+ {niche} projects"
+    ],
+    "specificity": [
+      "Day-by-day breakdown for {stack} development",
+      "Optimized for {niche} product requirements",
+      "Includes {stack}-specific architecture decisions"
+    ]
+  }
+}

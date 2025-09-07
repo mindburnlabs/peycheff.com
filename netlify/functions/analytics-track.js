@@ -320,13 +320,8 @@ async function alertCriticalError(errorData) {
 function hashEmail(email) {
   if (!email) return null;
   
-  let hash = 0;
-  for (let i = 0; i < email.length; i++) {
-    const char = email.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return `user_${Math.abs(hash)}`;
+  const crypto = require('crypto');
+  return crypto.createHash('sha256').update(email.toLowerCase().trim()).digest('hex');
 }
 
 function getProductCategory(sku) {

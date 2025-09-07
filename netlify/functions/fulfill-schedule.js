@@ -98,7 +98,7 @@ async function getNextAvailableSlot(sku) {
   const { data: slots, error } = await supabase
     .from('schedule_slots')
     .select('*')
-    .eq('type', getSlotTypeForSku(sku))
+    .eq('service_type', getSlotTypeForSku(sku))
     .eq('status', 'available')
     .gte('start_time', new Date().toISOString())
     .order('start_time', { ascending: true })
@@ -162,7 +162,7 @@ function generateDefaultSlot(sku) {
 
   return {
     id: `default-${Date.now()}`,
-    type: getSlotTypeForSku(sku),
+    service_type: getSlotTypeForSku(sku),
     start_time: nextWeek.toISOString(),
     end_time: endTime.toISOString(),
     timezone: 'America/New_York',

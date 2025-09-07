@@ -82,6 +82,24 @@ export const EVENTS = {
   LEAD_QUALIFIED: 'lead_qualified',
   CUSTOMER_CONVERTED: 'customer_converted',
   
+  // Sprint 1 Events - Interactive Preview & Trials
+  HERO_PREVIEW_GENERATED: 'hero_preview_generated',
+  HERO_CTA_CLICK: 'hero_cta_click',
+  ORDER_BUMP_VIEWED: 'order_bump_viewed',
+  ORDER_BUMP_SELECTED: 'order_bump_selected',
+  TRIAL_SIGNUP_START: 'trial_signup_start',
+  TRIAL_SIGNUP_COMPLETE: 'trial_signup_complete',
+  TRIAL_USAGE_INCREMENT: 'trial_usage_increment',
+  TRIAL_LIMIT_REACHED: 'trial_limit_reached',
+  TRIAL_CONVERTED: 'trial_converted',
+  PROGRAMMATIC_PAGE_VIEW: 'programmatic_page_view',
+  AUDIT_REPORT_GENERATED: 'audit_report_generated',
+  AUDIT_REPORT_VIEW: 'audit_report_view',
+  AUDIT_REPORT_SHARED: 'audit_report_shared',
+  FOUNDER_PACK_VIEWED: 'founder_pack_viewed',
+  FOUNDER_PACK_UPGRADE_CLICKED: 'founder_pack_upgrade_clicked',
+  FOUNDER_PACK_DECLINED: 'founder_pack_declined',
+  
   // Performance & Technical
   ERROR_OCCURRED: 'error_occurred',
   PERFORMANCE_ISSUE: 'performance_issue'

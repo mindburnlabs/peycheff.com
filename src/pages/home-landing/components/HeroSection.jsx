@@ -1,4 +1,5 @@
 import React from 'react';
+import InteractivePreview from './InteractivePreview';
 
 const HeroSection = () => {
   return (
@@ -8,35 +9,16 @@ const HeroSection = () => {
           {/* Main heading with Apple typography */}
           <div className="space-y-6">
             <h1 className="text-[56px] md:text-[64px] lg:text-[72px] leading-[64px] md:leading-[72px] lg:leading-[80px] font-semibold tracking-[-0.02em] text-[#F2F3F5] max-w-5xl mx-auto">
-              I build small teams that ship disproportionate outcomes.
+              Turn your idea into a shippable product in 30 days.
             </h1>
-            <p className="text-[16px] leading-[26px] tracking-[0] text-[#A5ABB3] max-w-2xl mx-auto">
-              Founder & systems designer. I turn vague ideas into shippable products—fast.
+            <p className="text-[18px] leading-[28px] tracking-[0] text-[#A5ABB3] max-w-3xl mx-auto">
+              Get a personalized sprint plan that actually works. No theory, no fluff—just the exact steps to build and ship your v1.
             </p>
           </div>
           
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-            <a 
-              href="/advisory-services" 
-              className="apple-button focus-visible-accent"
-            >
-              Work with me
-            </a>
-            
-            <a 
-              href="/notes-content-hub" 
-              className="px-6 py-3 text-[#A5ABB3] hover:text-[#F2F3F5] apple-motion focus-visible-accent"
-            >
-              Read my notes
-            </a>
-            
-            <a 
-              href="/newsletter" 
-              className="px-6 py-3 text-[#A5ABB3] hover:text-[#F2F3F5] apple-motion focus-visible-accent"
-            >
-              Subscribe
-            </a>
+          {/* Interactive Preview */}
+          <div className="pt-8">
+            <InteractivePreview />
           </div>
         </div>
 

@@ -86,6 +86,20 @@ export const STRIPE_PRODUCTS = {
       'Editable source files included'
     ]
   },
+  // Audit (bump target)
+  AUDIT_PRO: {
+    price: 6900,
+    name: 'Auto-Audit Pro',
+    description: 'Paste URL, get the next 7 days. Prioritized fixes and cadence.',
+    priceId: import.meta.env.VITE_STRIPE_AUDIT_PRO_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_AUDIT_PRO_PAYMENT_LINK,
+    type: 'one_time',
+    features: [
+      '7-day prioritized cadence',
+      'Top issues with next actions',
+      'Works from a single URL',
+    ]
+  },
   // Memberships
   MEMBER_MONTHLY: {
     price: 900, // $9.00 in cents
@@ -114,6 +128,21 @@ export const STRIPE_PRODUCTS = {
       'Early access to all products',
       'Member community access',
       'Save $18 vs monthly billing'
+    ]
+  },
+  MEMBER_PRO: {
+    price: 1900, // $19.00 in cents
+    name: 'Build Notes Pro',
+    description: '2 operator memos/month + unlimited re-gens + Pro utilities.',
+    priceId: import.meta.env.VITE_STRIPE_MEMBER_PRO_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_MEMBER_PRO_PAYMENT_LINK,
+    type: 'subscription',
+    features: [
+      '2 operator memos delivered monthly',
+      'Unlimited sprint plan re-generations',
+      'Pro utility access (day-throttled)',
+      'Priority support and feedback',
+      'Early access to new frameworks'
     ]
   },
   // Office Hours
@@ -161,6 +190,59 @@ export const STRIPE_PRODUCTS = {
       'Small team execution model',
       'Complete rollout documentation',
       'Applied to full $25K project cost'
+    ]
+  },
+  // Trials
+  UTILITY_PASS_TRIAL: {
+    price: 0, // Free trial
+    name: 'Utility Pass (7-Day Trial)',
+    description: '7-day free trial with 10 utility runs. Auto-converts to paid.',
+    priceId: import.meta.env.VITE_STRIPE_UTILITY_PASS_TRIAL_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_UTILITY_PASS_TRIAL_PAYMENT_LINK,
+    type: 'trial',
+    trialDays: 7,
+    usageLimit: 10,
+    features: [
+      '7-day free trial period',
+      '10 utility runs included',
+      'Access to all automation tools',
+      'Auto-converts to $19/month after trial',
+      'Cancel anytime during trial'
+    ]
+  },
+  // Auto-generated products
+  AUTO_AUDIT_PRO: {
+    price: 6900, // $69.00 in cents
+    name: 'Auto-Audit Pro',
+    description: 'Automated system analysis with prioritized fix list + 7-day cadence.',
+    priceId: import.meta.env.VITE_STRIPE_AUTO_AUDIT_PRO_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_AUTO_AUDIT_PRO_PAYMENT_LINK,
+    type: 'one_time',
+    features: [
+      'Automated system analysis (10 key issues)',
+      'Prioritized fix list with impact scores',
+      '7-day implementation cadence',
+      'Email delivery within 2 hours',
+      'Follow-up recommendations included'
+    ]
+  },
+  // Premium Bundles
+  FOUNDER_PACK: {
+    price: 14900, // $149.00 in cents
+    name: 'Founder Pack',
+    description: 'Complete founder toolkit: Sprint Plan + Auto-Audit Pro + 3-month Build Notes Pro + Office Hours seat.',
+    priceId: import.meta.env.VITE_STRIPE_FOUNDER_PACK_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_FOUNDER_PACK_PAYMENT_LINK,
+    type: 'one_time',
+    originalValue: 18700, // $39 + $69 + $27 + $49 = $187
+    savings: 3800, // $38 savings
+    features: [
+      '30-Day Sprint Plan (personalized)',
+      'Auto-Audit Pro (full analysis)',
+      '3-month Build Notes Pro membership',
+      'Office Hours seat (next available)',
+      'Priority email support',
+      'Founder community access'
     ]
   }
 };
@@ -214,7 +296,7 @@ export const getProduct = (productKey) => {
 };
 
 // Create Stripe checkout session using Stripe's client-side checkout
-export const createCheckoutSession = async (productKey, customerEmail = null) => {
+export const createCheckoutSession = async (productKey, customerOrOptions = null, orderBump = null) => {
   try {
     const stripe = await stripePromise;
     
@@ -235,7 +317,7 @@ export const createCheckoutSession = async (productKey, customerEmail = null) =>
     trackEvent(EVENTS.STRIPE_CHECKOUT_START, {
       product_name: product.name,
       product_price: product.price,
-      customer_email: customerEmail
+      customer_email: typeof customerOrOptions === 'string' ? customerOrOptions : customerOrOptions?.customerEmail || null
     });
     
     // Determine checkout mode based on product type
@@ -243,26 +325,43 @@ export const createCheckoutSession = async (productKey, customerEmail = null) =>
     const mode = isSubscription ? 'subscription' : 'payment';
     
     // Create checkout options
+    const lineItems = [{ price: product.priceId, quantity: 1 }];
+    
+    // Add order bump if specified
+    if (orderBump && STRIPE_PRODUCTS[orderBump]) {
+      const bumpProduct = STRIPE_PRODUCTS[orderBump];
+      if (bumpProduct.priceId) {
+        lineItems.push({ price: bumpProduct.priceId, quantity: 1 });
+      }
+    }
+
+    // Extended options object support
+    const options = typeof customerOrOptions === 'string' || customerOrOptions === null
+      ? { customerEmail: typeof customerOrOptions === 'string' ? customerOrOptions : null }
+      : (customerOrOptions || {});
+
+    const urlContext = options?.context ? `&goal=${encodeURIComponent(options.context.goal || '')}&stack=${encodeURIComponent(options.context.stack || '')}` : '';
+    
     const checkoutOptions = {
-      lineItems: [{
-        price: product.priceId,
-        quantity: 1
-      }],
+      lineItems,
       mode: mode,
-      successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&product=${productKey}`,
-      cancelUrl: `${window.location.origin}/checkout/cancel?product=${productKey}`,
+      successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&product=${productKey}${orderBump ? `&bump=${orderBump}` : ''}${urlContext}`,
+      cancelUrl: `${window.location.origin}/checkout/cancel?product=${productKey}${urlContext}`,
       automaticTax: { enabled: true },
       billingAddressCollection: 'required',
       allowPromotionCodes: true,
       metadata: {
         product_key: productKey,
-        source: 'peycheff_website'
+        order_bump: orderBump || 'none',
+        source: 'peycheff_website',
+        goal: options?.context?.goal || undefined,
+        stack: options?.context?.stack || undefined,
       }
     };
     
     // Add customer email if provided
-    if (customerEmail) {
-      checkoutOptions.customerEmail = customerEmail;
+    if (options.customerEmail) {
+      checkoutOptions.customerEmail = options.customerEmail;
     }
 
     // For subscriptions, add trial period and billing cycle anchor if needed
