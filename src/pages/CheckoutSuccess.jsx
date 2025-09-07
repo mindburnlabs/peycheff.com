@@ -1,23 +1,67 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { trackEvent } from '../lib/analytics';
+import { trackEvent, EVENTS, trackConversionStep, identifyUser } from '../lib/analytics';
+import { STRIPE_PRODUCTS } from '../lib/stripe';
 import Icon from '../components/AppIcon';
 import SEO from '../components/SEO';
 
 const CheckoutSuccess = () => {
   const [searchParams] = useSearchParams();
+  const [isTracked, setIsTracked] = useState(false);
   const sessionId = searchParams.get('session_id');
   const productKey = searchParams.get('product');
+  const customerEmail = searchParams.get('email'); // If passed via URL
+  
+  const product = productKey ? STRIPE_PRODUCTS[productKey] : null;
 
   useEffect(() => {
-    // Track successful checkout completion
-    if (sessionId && productKey) {
-      trackEvent('checkout_success', {
+    // Comprehensive purchase success tracking
+    if (sessionId && productKey && !isTracked) {
+      setIsTracked(true);
+      
+      // Track purchase success event
+      trackEvent(EVENTS.PURCHASE_SUCCESS, {
         session_id: sessionId,
-        product_key: productKey
+        product_key: productKey,
+        product_name: product?.name,
+        product_price: product?.price,
+        product_type: product?.type,
+        conversion_source: 'checkout_session',
+        timestamp: new Date().toISOString()
       });
+      
+      // Track conversion funnel completion
+      trackConversionStep('purchase_complete', {
+        product_key: productKey,
+        session_id: sessionId,
+        funnel: 'product_purchase',
+        success: true
+      });
+      
+      // Identify user if email available
+      if (customerEmail) {
+        identifyUser(customerEmail, {
+          method: 'purchase',
+          source: 'stripe_checkout',
+          first_purchase: true // Could be enhanced with customer lookup
+        });
+      }
+      
+      // Track page performance
+      setTimeout(() => {
+        if (window.performance) {
+          const navigation = window.performance.getEntriesByType('navigation')[0];
+          if (navigation) {
+            trackEvent(EVENTS.PERFORMANCE_ISSUE, {
+              page: 'checkout_success',
+              load_time_ms: navigation.loadEventEnd - navigation.loadEventStart,
+              session_id: sessionId
+            });
+          }
+        }
+      }, 1000);
     }
-  }, [sessionId, productKey]);
+  }, [sessionId, productKey, isTracked, product, customerEmail]);
 
   return (
     <>

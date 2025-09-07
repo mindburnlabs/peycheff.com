@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { trackEvent, EVENTS } from '../lib/analytics';
-import { STRIPE_PRODUCTS, createCheckoutSession, formatPrice } from '../lib/stripe';
+import React, { useState, useEffect } from 'react';
+import { trackEvent, EVENTS, trackProductView, trackConversionStep } from '../lib/analytics';
+import { STRIPE_PRODUCTS, createCheckoutSession, formatPrice, redirectToPaymentLink } from '../lib/stripe';
 import Icon from './AppIcon';
 
 const ProductButton = ({ 
@@ -10,11 +10,24 @@ const ProductButton = ({
   children,
   className = '',
   disabled = false,
+  usePaymentLink = true, // Default to 1-click Payment Links
   ...props 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const product = STRIPE_PRODUCTS[productKey];
+
+  // Track product view on component mount
+  useEffect(() => {
+    if (product) {
+      trackProductView({
+        id: productKey,
+        name: product.name,
+        price: product.price,
+        type: product.type
+      });
+    }
+  }, [productKey, product]);
 
   if (!product) {
     console.error(`Product not found: ${productKey}`);
@@ -32,31 +45,60 @@ const ProductButton = ({
     setError(null);
 
     try {
-      // Track CTA click
-      trackEvent('cta_product_click', {
+      // Track product CTA click
+      trackEvent(EVENTS.PRODUCT_CTA_CLICK, {
         product_key: productKey,
         product_name: product.name,
-        product_price: product.price
+        product_price: product.price,
+        product_type: product.type,
+        button_variant: variant,
+        page_url: window.location.href
       });
 
-      // Use Stripe Checkout (redirects to Stripe-hosted checkout)
-      const result = await createCheckoutSession(productKey);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to start checkout');
+      // Track conversion funnel step
+      trackConversionStep('cta_click', {
+        product_key: productKey,
+        funnel: 'product_purchase'
+      });
+
+      if (usePaymentLink && product.paymentLink) {
+        // Use 1-click Payment Link (autopilot UX)
+        trackEvent(EVENTS.STRIPE_PAYMENT_LINK_CLICK, {
+          product_key: productKey,
+          payment_method: 'payment_link'
+        });
+        
+        const result = redirectToPaymentLink(productKey);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Payment link not available');
+        }
+      } else {
+        // Fallback to traditional checkout
+        trackEvent(EVENTS.STRIPE_CHECKOUT_START, {
+          product_key: productKey,
+          payment_method: 'checkout_session'
+        });
+        
+        const result = await createCheckoutSession(productKey);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to start checkout');
+        }
       }
-      
-      // createCheckoutSession handles the redirect, so we won't reach here
-      // unless there's an error
       
     } catch (err) {
       console.error('Checkout error:', err);
       setError(err.message);
       
-      // Track error
-      trackEvent('checkout_error', {
+      // Track error with enhanced data
+      trackEvent(EVENTS.ERROR_OCCURRED, {
+        error_type: 'checkout_error',
         product_key: productKey,
-        error: err.message
+        error_message: err.message,
+        payment_method: usePaymentLink ? 'payment_link' : 'checkout_session',
+        user_agent: navigator.userAgent,
+        page_url: window.location.href
       });
     } finally {
       setIsLoading(false);

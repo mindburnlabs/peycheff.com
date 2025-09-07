@@ -197,7 +197,16 @@ async function handleCheckoutCompleted(session, eventId) {
     // 3. Create entitlement
     await createEntitlement(customerEmail, skuConfig);
 
-    // 4. Dispatch fulfillment based on SKU type
+    // 4. Track purchase for analytics
+    await trackPurchaseEvent({
+      sku: productKey,
+      amount_cents: amount,
+      customer_email: customerEmail,
+      order_id: order.id,
+      session_id: session.id
+    });
+
+    // 5. Dispatch fulfillment based on SKU type
     await dispatchFulfillment(productKey, skuConfig, {
       customer_email: customerEmail,
       session_id: session.id,
@@ -386,6 +395,34 @@ async function dispatchFulfillment(productKey, skuConfig, purchaseData) {
   } catch (error) {
     console.error(`Fulfillment dispatch failed for ${productKey}:`, error);
     // Continue - we don't want to fail the webhook for fulfillment issues
+  }
+}
+
+// =============================================================================
+// ANALYTICS TRACKING
+// =============================================================================
+
+async function trackPurchaseEvent(purchaseData) {
+  try {
+    // Send analytics event to our tracking endpoint
+    const analyticsUrl = `${process.env.URL}/.netlify/functions/analytics-track`;
+    
+    await fetch(analyticsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.FULFILLMENT_SECRET}`
+      },
+      body: JSON.stringify({
+        event: 'purchase',
+        data: purchaseData
+      })
+    });
+    
+    console.log(`Purchase analytics tracked for ${purchaseData.sku}`);
+  } catch (error) {
+    console.error('Analytics tracking failed:', error);
+    // Don't throw - analytics failures shouldn't break the webhook
   }
 }
 
