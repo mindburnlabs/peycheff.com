@@ -82,32 +82,53 @@ export const getExperimentVariant = (experimentKey, userId = null) => {
 
   // Use localStorage for anonymous users, userId for identified users
   const identifier = userId || getAnonymousId();
+
+  // Local override for experiments (store variant key e.g., 'variant_a')
+  try {
+    const overrideKey = localStorage.getItem(`exp_${experimentKey}_override`);
+    if (overrideKey && experiment.variants[overrideKey] !== undefined) {
+      return experiment.variants[overrideKey];
+    }
+  } catch {}
+
+  // Check for a stored assignment first to avoid re-bucketing
+  const storedVariantKey = getStoredVariant(experimentKey, identifier);
+  if (storedVariantKey && experiment.variants[storedVariantKey] !== undefined) {
+    return experiment.variants[storedVariantKey];
+  }
+
   const bucket = getUserBucket(identifier, experimentKey);
   
   // Allocate based on experiment allocation percentages
   let cumulativePercentage = 0;
-  for (const [variant, percentage] of Object.entries(experiment.allocation)) {
+  for (const [variantKey, percentage] of Object.entries(experiment.allocation)) {
     cumulativePercentage += percentage;
     if (bucket < cumulativePercentage) {
-      // Track experiment exposure
+      // Persist assignment and track exposure
+      storeVariant(experimentKey, variantKey, identifier);
       trackEvent('experiment_exposure', {
         experiment_key: experimentKey,
         experiment_name: experiment.name,
-        variant: variant,
+        variant: variantKey,
         user_bucket: bucket,
         user_id: identifier
       });
       
-      return experiment.variants[variant];
+      return experiment.variants[variantKey];
     }
   }
   
   // Fallback to control
+  storeVariant(experimentKey, 'control', identifier);
   return experiment.variants.control;
 };
 
 // Check if a feature flag is enabled
 export const isFeatureEnabled = (flagKey) => {
+  try {
+    const override = localStorage.getItem(`flag_${flagKey}`);
+    if (override !== null) return override === 'true';
+  } catch {}
   return FEATURE_FLAGS[flagKey] === true;
 };
 

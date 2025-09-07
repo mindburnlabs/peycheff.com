@@ -1,6 +1,10 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 const Work = () => {
+  const reducedMotion = useReducedMotion();
+  
   const projects = [
     {
       title: "Generative NFT launch (2021)",
@@ -29,24 +33,60 @@ const Work = () => {
     }
   ];
 
+  const fadeInUp = {
+    initial: { opacity: 0, y: reducedMotion ? 0 : 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: reducedMotion ? 0 : 0.6, ease: "easeOut" }
+  };
+
+  const staggerChildren = {
+    animate: {
+      transition: {
+        staggerChildren: reducedMotion ? 0 : 0.1
+      }
+    }
+  };
+
   return (
-    <div className="py-16">
-      <div className="container max-w-5xl">
+    <div className="narrative-section py-24">
+      <div>
         {/* Header */}
-        <section className="py-20 text-center">
-          <h1 className="heading-1 mb-6">Work</h1>
-          <p className="text-h3 text-muted-foreground max-w-3xl mx-auto">
+        <motion.section 
+          className="py-20 text-center"
+          initial="initial"
+          animate="animate"
+          variants={staggerChildren}
+        >
+          <motion.h1 
+            className="heading-1 mb-6"
+            variants={fadeInUp}
+          >
+            Work
+          </motion.h1>
+          <motion.p 
+            className="text-h3 text-muted-foreground max-w-3xl mx-auto"
+            variants={fadeInUp}
+          >
             Four proof-of-execution snapshots. Context → System → Result. No filler.
-          </p>
-        </section>
+          </motion.p>
+        </motion.section>
 
         {/* Project Cards */}
-        <section className="py-12">
+        <motion.section 
+          className="py-12"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerChildren}
+        >
           <div className="grid lg:grid-cols-2 gap-8">
             {projects.map((project, index) => (
-              <div 
+              <motion.div 
                 key={index} 
                 className="surface p-8 hover:-translate-y-px transition-all duration-160"
+                variants={fadeInUp}
+                whileHover={reducedMotion ? {} : { y: -4, scale: 1.02 }}
+                transition={{ duration: 0.2 }}
               >
                 <h2 className="heading-2 mb-6">{project.title}</h2>
                 
@@ -74,25 +114,49 @@ const Work = () => {
                     </a>
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* CTA */}
-        <section className="py-16 text-center">
-          <p className="text-h3 text-muted-foreground mb-8">
+        <motion.section 
+          className="py-16 text-center"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerChildren}
+        >
+          <motion.p 
+            className="text-h3 text-muted-foreground mb-8"
+            variants={fadeInUp}
+          >
             Interested in working together?
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/advisory" className="btn-primary">
+          </motion.p>
+          <motion.div 
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            variants={staggerChildren}
+          >
+            <motion.a 
+              href="/advisory" 
+              className="btn-primary"
+              variants={fadeInUp}
+              whileHover={reducedMotion ? {} : { scale: 1.05 }}
+              whileTap={reducedMotion ? {} : { scale: 0.95 }}
+            >
               View advisory services
-            </a>
-            <a href="/contact" className="btn-secondary">
+            </motion.a>
+            <motion.a 
+              href="/contact" 
+              className="btn-secondary"
+              variants={fadeInUp}
+              whileHover={reducedMotion ? {} : { scale: 1.05 }}
+              whileTap={reducedMotion ? {} : { scale: 0.95 }}
+            >
               Start a conversation
-            </a>
-          </div>
-        </section>
+            </motion.a>
+          </motion.div>
+        </motion.section>
       </div>
     </div>
   );

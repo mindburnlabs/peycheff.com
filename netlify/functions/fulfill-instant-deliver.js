@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import crypto from 'crypto';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -105,12 +106,30 @@ async function createInstantDownload(sku, customerEmail) {
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     });
 
+  const reportToken = crypto.randomUUID();
+
+  // Optionally create a public report record for shareable links
+  await supabase
+    .from('audit_reports')
+    .insert({
+      token: reportToken,
+      customer_email: customerEmail,
+      url: null,
+      issues: [],
+      summary: productFile.description,
+      watermark: 'Download',
+      is_public: true
+    })
+    .select('token')
+    .single();
+
   return {
     filename: productFile.filename,
     description: productFile.description,
     download_url: signedUrl.signedUrl,
     token: downloadToken,
-    expires_in_days: 7
+    expires_in_days: 7,
+    report_link: `https://peycheff.com/r/${reportToken}`
   };
 }
 

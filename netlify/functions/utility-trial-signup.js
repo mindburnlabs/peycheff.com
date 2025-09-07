@@ -10,7 +10,7 @@ const supabase = createClient(
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Trial configuration
+// Trial configuration (defaults). May be overridden by experiment variant
 const TRIAL_CONFIG = {
   duration_days: 7,
   usage_limit: 10,
@@ -67,6 +67,14 @@ exports.handler = async (event, context) => {
 
     const hashedEmail = hashEmail(email);
 
+    // Allow experiment-driven trial cap (A/B) via query param variant for now
+    // e.g., /.netlify/functions/utility-trial-signup?trial_variant=variant_a
+    const variantParam = event.queryStringParameters?.trial_variant || null;
+    let trialUsageLimit = TRIAL_CONFIG.usage_limit;
+    if (variantParam === 'variant_a') trialUsageLimit = 10;
+    else if (variantParam === 'variant_b') trialUsageLimit = 3;
+    else if (variantParam === 'control') trialUsageLimit = 5;
+
     // Check if user already has an active trial
     const existingTrial = await checkExistingTrial(hashedEmail);
     if (existingTrial.exists) {
@@ -82,7 +90,7 @@ exports.handler = async (event, context) => {
     }
 
     // Create trial entitlement
-    const trial = await createTrialEntitlement(hashedEmail, email, source);
+    const trial = await createTrialEntitlement(hashedEmail, email, source, trialUsageLimit);
     
     // Send welcome email
     await sendTrialWelcomeEmail(email, trial);
@@ -140,7 +148,7 @@ const checkExistingTrial = async (hashedEmail) => {
 };
 
 // Create trial entitlement record
-const createTrialEntitlement = async (hashedEmail, originalEmail, source) => {
+const createTrialEntitlement = async (hashedEmail, originalEmail, source, usageLimitOverride = null) => {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + TRIAL_CONFIG.duration_days);
 
@@ -151,7 +159,7 @@ const createTrialEntitlement = async (hashedEmail, originalEmail, source) => {
       original_email: originalEmail, // Store for email purposes only
       sku: TRIAL_CONFIG.sku,
       status: 'active',
-      usage_limit: TRIAL_CONFIG.usage_limit,
+      usage_limit: usageLimitOverride ?? TRIAL_CONFIG.usage_limit,
       usage_count: 0,
       expires_at: expiresAt.toISOString(),
       source: source,

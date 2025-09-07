@@ -16,6 +16,7 @@ const CheckoutSuccess = () => {
   const customerEmail = searchParams.get('email'); // If passed via URL
   
   const product = productKey ? STRIPE_PRODUCTS[productKey] : null;
+  const [portalUrl, setPortalUrl] = useState(null);
 
   useEffect(() => {
     // Comprehensive purchase success tracking
@@ -68,6 +69,21 @@ const CheckoutSuccess = () => {
       }, 1000);
     }
   }, [sessionId, productKey, isTracked, product, customerEmail]);
+
+  const openPortal = async () => {
+    try {
+      const res = await fetch('/.netlify/functions/stripe-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: null, returnUrl: window.location.origin })
+      });
+      const data = await res.json();
+      if (data?.url) {
+        setPortalUrl(data.url);
+        window.location.href = data.url;
+      }
+    } catch (e) {}
+  };
 
   return (
     <>
@@ -129,6 +145,12 @@ const CheckoutSuccess = () => {
               <Icon name="ArrowLeft" size={16} />
               Browse More Products
             </Link>
+            <button
+              onClick={openPortal}
+              className="w-full border border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            >
+              Manage Subscription / Billing
+            </button>
             
             <Link
               to="/contact"

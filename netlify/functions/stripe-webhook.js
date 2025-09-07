@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+const crypto = require('crypto');
 const { emailService } = require('./lib/email-service');
 const { aiService } = require('./lib/ai-service');
 const { pdfService } = require('./lib/pdf-service');
@@ -233,6 +234,19 @@ async function handleCheckoutCompleted(session, eventId) {
       });
     }
 
+    // If user purchases a membership that supersedes a trial, mark trial as converted
+    if (['MEMBER_PRO', 'MEMBER_MONTHLY', 'MEMBER_ANNUAL', 'FOUNDER_PACK'].includes(productKey)) {
+      const converted = await markTrialConverted(customerEmail);
+      if (converted) {
+        await trackTrialConverted({
+          customer_email: customerEmail,
+          sku: productKey,
+          order_id: order.id,
+          session_id: session.id
+        });
+      }
+    }
+
     // 4. Track purchase for analytics
     await trackPurchaseEvent({
       sku: productKey,
@@ -252,6 +266,10 @@ async function handleCheckoutCompleted(session, eventId) {
     });
 
     console.log(`Autopilot fulfillment dispatched for ${productKey} → ${customerEmail}`);
+
+    // Enqueue drips D1/D3
+    await enqueueDrip(customerEmail, 'DRIP_D1', 1);
+    await enqueueDrip(customerEmail, 'DRIP_D3', 3);
 
   } catch (error) {
     console.error('Error in autopilot checkout:', error);
@@ -285,6 +303,8 @@ async function handleSubscriptionPayment(invoice, eventId) {
           // Extend entitlement for renewal
           await extendEntitlement(customerEmail, skuConfig);
           console.log(`Entitlement extended for ${productKey} → ${customerEmail}`);
+          // If this is the first paid cycle after a trial, ensure trial is marked converted
+          await markTrialConverted(customerEmail);
         }
       }
     }
@@ -517,6 +537,32 @@ async function trackPurchaseEvent(purchaseData) {
   }
 }
 
+// Track trial conversion as a server-side analytics event
+async function trackTrialConverted(data) {
+  try {
+    const analyticsUrl = `${process.env.URL}/.netlify/functions/analytics-track`;
+    await fetch(analyticsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.FULFILLMENT_SECRET}`
+      },
+      body: JSON.stringify({
+        event: 'trial_converted',
+        data: {
+          sku: data.sku,
+          order_id: data.order_id,
+          session_id: data.session_id,
+          customer_email: data.customer_email
+        }
+      })
+    });
+    console.log(`Trial conversion tracked for ${data.customer_email}`);
+  } catch (error) {
+    console.error('Trial conversion tracking failed:', error);
+  }
+}
+
 // =============================================================================
 // UTILITY FUNCTIONS
 // =============================================================================
@@ -548,8 +594,45 @@ function inferProductFromSubscription(subscription) {
   // Map price IDs to product keys (you'd need to maintain this mapping)
   const priceToSku = {
     [process.env.VITE_STRIPE_MEMBER_MONTHLY_PRICE_ID]: 'MEMBER_MONTHLY',
-    [process.env.VITE_STRIPE_MEMBER_ANNUAL_PRICE_ID]: 'MEMBER_ANNUAL'
+    [process.env.VITE_STRIPE_MEMBER_ANNUAL_PRICE_ID]: 'MEMBER_ANNUAL',
+    [process.env.VITE_STRIPE_MEMBER_PRO_PRICE_ID]: 'MEMBER_PRO'
   };
   
   return priceToSku[priceId] || null;
+}
+
+async function enqueueDrip(email, template, daysFromNow) {
+  try {
+    const when = new Date();
+    when.setDate(when.getDate() + daysFromNow);
+    await supabase
+      .from('drip_queue')
+      .insert([{ email, template, scheduled_at: when.toISOString(), payload: {} }]);
+  } catch (error) {
+    console.error('enqueueDrip error:', error);
+  }
+}
+
+// Mark any active Utility Pass trials as converted for this customer
+async function markTrialConverted(email) {
+  try {
+    if (!email) return false;
+    const hashedEmail = crypto.createHash('sha256').update(String(email).toLowerCase().trim()).digest('hex');
+    const { data, error } = await supabase
+      .from('trial_entitlements')
+      .update({ status: 'converted', updated_at: new Date().toISOString() })
+      .eq('email', hashedEmail)
+      .eq('sku', 'UTILITY_PASS_TRIAL')
+      .eq('status', 'active')
+      .select('id');
+
+    if (error) {
+      console.error('Error marking trial converted:', error);
+      return false;
+    }
+    return Array.isArray(data) && data.length > 0;
+  } catch (err) {
+    console.error('markTrialConverted error:', err);
+    return false;
+  }
 }

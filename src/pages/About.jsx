@@ -1,6 +1,10 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 const About = () => {
+  const reducedMotion = useReducedMotion();
+  
   const timeline = [
     {
       bet: "Built a generative NFT collection",
@@ -24,76 +28,150 @@ const About = () => {
     }
   ];
 
+  const fadeInUp = {
+    initial: { opacity: 0, y: reducedMotion ? 0 : 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: reducedMotion ? 0 : 0.6, ease: "easeOut" }
+  };
+
+  const staggerChildren = {
+    animate: {
+      transition: {
+        staggerChildren: reducedMotion ? 0 : 0.1
+      }
+    }
+  };
+
   return (
-    <div className="px-6 py-32">
-      <div className="max-w-4xl mx-auto">
+    <div className="narrative-section py-24">
+      <div>
         {/* Hero */}
-        <section className="pb-20">
-          <h1 className="text-h1 mb-12 leading-[1.1] max-w-3xl">
+        <motion.section 
+          className="pb-20"
+          initial="initial"
+          animate="animate"
+          variants={staggerChildren}
+        >
+          <motion.h1 
+            className="text-h1 mb-12 leading-[1.1] max-w-3xl"
+            variants={fadeInUp}
+          >
             Founder & systems designer focused on compressing idea→product cycles.
-          </h1>
+          </motion.h1>
           
           <div className="grid lg:grid-cols-12 gap-16">
             <div className="lg:col-span-8">
-              <p className="text-[20px] leading-[1.6] text-muted-foreground mb-12">
+              <motion.p 
+                className="text-[20px] leading-[1.6] text-muted-foreground mb-12"
+                variants={fadeInUp}
+              >
                 I build compact systems that turn ideas into products fast. Clear scope, tiny teams, and instrumentation keep us honest. Elegant doesn't mean complex—it means useful, durable, and easy to run.
-              </p>
+              </motion.p>
               
               {/* Reality stripe - inline, not boxed */}
-              <p className="text-[20px] leading-[1.6] font-medium mb-12">
+              <motion.p 
+                className="text-[20px] leading-[1.6] font-medium mb-12"
+                variants={fadeInUp}
+              >
                 In 2022 I lost ~a million, went through a divorce, and got covid. I kept shipping. Scar tissue beats theory.
-              </p>
+              </motion.p>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Brain section */}
-        <section className="py-20 border-t border-border">
+        <motion.section 
+          className="py-20 border-t border-border"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerChildren}
+        >
           <div className="grid lg:grid-cols-12 gap-16">
             <div className="lg:col-span-3">
-              <h2 className="text-[24px] font-semibold leading-[1.3]">
+              <motion.h2 
+                className="text-[24px] font-semibold leading-[1.3]"
+                variants={fadeInUp}
+              >
                 How my brain helps
-              </h2>
+              </motion.h2>
             </div>
             <div className="lg:col-span-9">
-              <p className="text-[18px] leading-[1.6] text-muted-foreground">
+              <motion.p 
+                className="text-[18px] leading-[1.6] text-muted-foreground"
+                variants={fadeInUp}
+              >
                 ADHD → deep hyperfocus sprints, fast pattern recognition, ruthless simplification. My work cadence reflects that.
-              </p>
+              </motion.p>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Principles */}
-        <section className="py-20 border-t border-border">
+        <motion.section 
+          className="py-20 border-t border-border"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerChildren}
+        >
           <div className="grid lg:grid-cols-12 gap-16">
             <div className="lg:col-span-3">
-              <h2 className="text-[24px] font-semibold leading-[1.3]">
+              <motion.h2 
+                className="text-[24px] font-semibold leading-[1.3]"
+                variants={fadeInUp}
+              >
                 Principles
-              </h2>
+              </motion.h2>
             </div>
             <div className="lg:col-span-9">
-              <div className="flex flex-wrap gap-8">
-                <span className="text-[18px] font-medium">Ship fast</span>
-                <span className="text-[18px] font-medium">Instrument reality</span>
-                <span className="text-[18px] font-medium">Teach in public</span>
-                <span className="text-[18px] font-medium">Avoid buzzwords</span>
-              </div>
+              <motion.div 
+                className="flex flex-wrap gap-8"
+                variants={staggerChildren}
+              >
+                {["Ship fast", "Instrument reality", "Teach in public", "Avoid buzzwords"].map((principle, index) => (
+                  <motion.span 
+                    key={principle}
+                    className="text-[18px] font-medium"
+                    variants={fadeInUp}
+                    whileHover={reducedMotion ? {} : { scale: 1.05 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {principle}
+                  </motion.span>
+                ))}
+              </motion.div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Timeline */}
-        <section className="py-20 border-t border-border">
+        <motion.section 
+          className="py-20 border-t border-border"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerChildren}
+        >
           <div className="grid lg:grid-cols-12 gap-16">
             <div className="lg:col-span-3">
-              <h2 className="text-[24px] font-semibold leading-[1.3] sticky top-32">
+              <motion.h2 
+                className="text-[24px] font-semibold leading-[1.3] sticky top-32"
+                variants={fadeInUp}
+              >
                 Timeline
                 <span className="block text-[16px] font-normal text-muted-foreground mt-1">bet → outcome</span>
-              </h2>
+              </motion.h2>
             </div>
             <div className="lg:col-span-9 space-y-12">
               {timeline.map((item, index) => (
-                <div key={index} className="group">
+                <motion.div 
+                  key={index} 
+                  className="group"
+                  variants={fadeInUp}
+                  whileHover={reducedMotion ? {} : { x: 8 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                     <div className="lg:flex-1">
                       <p className="text-[18px] leading-[1.6]">{item.bet}</p>
@@ -103,18 +181,24 @@ const About = () => {
                       <p className="text-[18px] leading-[1.6] font-medium">{item.outcome}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Footer note */}
-        <section className="py-20 border-t border-border text-center">
+        <motion.section 
+          className="py-20 border-t border-border text-center"
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={fadeInUp}
+        >
           <p className="text-[14px] text-muted-foreground">
             Ivan Peychev (peycheff is the brand/domain)
           </p>
-        </section>
+        </motion.section>
       </div>
     </div>
   );

@@ -2,25 +2,35 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import SEO from '../components/SEO';
+import { isFeatureEnabled } from '../lib/experiments';
 import { useScrollAnimation, scrollAnimationVariants } from '../utils/scrollAnimations';
 import { Tooltip } from '../components/InteractiveElements';
+import CheckoutCopilot from '../components/CheckoutCopilot';
+import useReducedMotion from '../hooks/useReducedMotion';
 
 const Home = () => {
-  const [heroRef, heroVisible] = useScrollAnimation(0.2);
-  const [proofRef, proofVisible] = useScrollAnimation(0.3);
-  const [workRef, workVisible] = useScrollAnimation(0.2);
-  const [advisoryRef, advisoryVisible] = useScrollAnimation(0.2);
+  const reducedMotion = useReducedMotion();
+  const [heroRef, heroVisible] = useScrollAnimation(reducedMotion ? 1 : 0.2);
+  const [proofRef, proofVisible] = useScrollAnimation(reducedMotion ? 1 : 0.3);
+  const [workRef, workVisible] = useScrollAnimation(reducedMotion ? 1 : 0.2);
+  const [advisoryRef, advisoryVisible] = useScrollAnimation(reducedMotion ? 1 : 0.2);
 
   const [goal, setGoal] = useState('Ship a usable v1 in 30 days');
   const [stack, setStack] = useState('React + Node + Supabase');
   const [preview, setPreview] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
+  const [email, setEmail] = useState('');
   const runPreview = async (e) => {
     e?.preventDefault?.();
     try {
       setLoadingPreview(true);
       setPreview(null);
+      // Optional email gate
+      if (isFeatureEnabled('PREVIEW_EMAIL_GATE') && !email) {
+        throw new Error('Please enter your email to see the preview.');
+      }
+
       const res = await fetch('/.netlify/functions/preview-sprint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,7 +57,7 @@ const Home = () => {
     <>
       <SEO />
       {/* Hero - Hyper minimal, massive impact */}
-      <section className="px-6 pt-40 pb-32 relative overflow-hidden">
+      <section className="narrative-section pt-40 pb-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/5 to-transparent opacity-50" />
         <motion.div 
           ref={heroRef}
@@ -79,6 +89,16 @@ const Home = () => {
             variants={scrollAnimationVariants.fadeInUp}
           >
             <form onSubmit={runPreview} className="grid md:grid-cols-3 gap-3 max-w-3xl">
+              {isFeatureEnabled('PREVIEW_EMAIL_GATE') && (
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="bg-input border border-border rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent placeholder-muted-foreground md:col-span-3"
+                  required
+                />
+              )}
               <input
                 type="text"
                 value={goal}
@@ -106,7 +126,15 @@ const Home = () => {
 
             <div className="flex items-center gap-4">
               <button onClick={startCheckout} className="btn-primary hover-spring">
-                Generate my plan
+                {(() => {
+                  try {
+                    const { getExperimentVariant } = require('../lib/experiments');
+                    const label = getExperimentVariant('HERO_CTA_VARIANT');
+                    return label || 'Generate my plan';
+                  } catch (e) {
+                    return 'Generate my plan';
+                  }
+                })()}
               </button>
               <span className="text-sm text-muted-foreground">Preview shows Week‑1 only.</span>
             </div>
@@ -116,8 +144,8 @@ const Home = () => {
 
       {/* Preview render */}
       {preview && (
-        <section className="px-6 pt-0 pb-12">
-          <div className="max-w-container mx-auto">
+        <section className="narrative-section pt-0 pb-12">
+          <div>
             <div className="relative border border-border/30 rounded-xl p-6 bg-surface/40 overflow-hidden">
               <div className="absolute top-4 right-4 text-xs px-2 py-1 rounded bg-accent/10 text-accent">
                 {preview.watermark}
@@ -146,16 +174,16 @@ const Home = () => {
       )}
 
       {/* Proof - Clean facts with subtle animations */}
-      <section className="px-6 py-32 relative">
+      <section className="narrative-section py-24 relative">
         <div className="absolute inset-0 glass-light opacity-50" />
         <motion.div 
           ref={proofRef}
-          className="max-w-container mx-auto relative z-10"
+          className="relative z-10"
           variants={scrollAnimationVariants.stagger}
           initial="hidden"
           animate={proofVisible ? "visible" : "hidden"}
         >
-          <div className="grid lg:grid-cols-3 gap-16 lg:gap-24">
+          <div className="grid lg:grid-cols-3 gap-12 lg:gap-20">
             <motion.div 
               className="group cursor-pointer"
               variants={scrollAnimationVariants.fadeInLeft}
@@ -167,6 +195,9 @@ const Home = () => {
                 </p>
               </div>
             </motion.div>
+            <div className="lg:col-span-3">
+              <CheckoutCopilot />
+            </div>
             <motion.div 
               className="group cursor-pointer"
               variants={scrollAnimationVariants.fadeInUp}
@@ -194,16 +225,16 @@ const Home = () => {
       </section>
 
       {/* Work - Enhanced list format with animations */}
-      <section className="px-6 py-32 relative">
+      <section className="narrative-section py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-background via-gray-950/30 to-background" />
         <motion.div 
           ref={workRef}
-          className="max-w-container mx-auto relative z-10"
+          className="relative z-10"
           variants={scrollAnimationVariants.stagger}
           initial="hidden"
           animate={workVisible ? "visible" : "hidden"}
         >
-          <div className="grid lg:grid-cols-12 gap-16">
+          <div className="grid lg:grid-cols-12 gap-12">
             <motion.div 
               className="lg:col-span-3"
               variants={scrollAnimationVariants.fadeInLeft}

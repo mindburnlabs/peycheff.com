@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { addHoverPrefetch } from '../../utils/prefetch';
 
 const Header = () => {
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
+  const linkRefs = useRef({});
   
   const navItems = [
     { path: '/', label: 'Home' },
@@ -23,6 +25,23 @@ const Header = () => {
     
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Set up hover prefetching for navigation links
+  useEffect(() => {
+    const cleanupFunctions = [];
+    
+    navItems.forEach(item => {
+      const linkElement = linkRefs.current[item.path];
+      if (linkElement) {
+        const cleanup = addHoverPrefetch(linkElement, item.path);
+        cleanupFunctions.push(cleanup);
+      }
+    });
+    
+    return () => {
+      cleanupFunctions.forEach(cleanup => cleanup());
+    };
   }, []);
   
   const isActive = (path) => {
@@ -64,6 +83,7 @@ const Header = () => {
             {navItems.map((item) => (
               <Link
                 key={item.path}
+                ref={(el) => { linkRefs.current[item.path] = el; }}
                 to={item.path}
                 className={`relative text-[16px] font-medium transition-all duration-200 group ${
                   isActive(item.path) 

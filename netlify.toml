@@ -12,6 +12,11 @@
   to = "/index.html"
   status = 200
 
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+
 # Headers for security and performance
 [[headers]]
   for = "/*"
@@ -21,8 +26,7 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com; connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://*.supabase.co https://*.supabase.in /.netlify/functions; img-src 'self' data: blob: https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; frame-src https://js.stripe.com; font-src 'self' data:; base-uri 'self'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'; upgrade-insecure-requests"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.google-analytics.com; connect-src 'self' https://api.stripe.com https://api.resend.com https://*.supabase.co https://www.google-analytics.com; frame-src https://js.stripe.com https://hooks.stripe.com;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com; connect-src 'self' https://api.stripe.com https://api.resend.com https://www.google-analytics.com https://www.googletagmanager.com https://*.supabase.co https://*.supabase.in /.netlify/functions; img-src 'self' data: blob: https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src https://js.stripe.com https://hooks.stripe.com; base-uri 'self'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'; upgrade-insecure-requests"
 
 [[headers]]
   for = "/static/*"
@@ -46,7 +50,7 @@
 # Serverless functions configuration
 [functions]
   # All functions will be deployed from netlify/functions/
-  external_node_modules = ["@supabase/supabase-js", "resend", "stripe"]
+  external_node_modules = ["@supabase/supabase-js", "resend", "stripe", "openai", "puppeteer-core"]
 
 # Scheduled functions (configure in Netlify UI or use GitHub Actions)
 # For now, use manual trigger: POST /.netlify/functions/trigger-autopublish

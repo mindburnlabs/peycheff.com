@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Narrative container-light layout utilities */
+.container-light {
+  @apply max-w-5xl mx-auto px-6;
+}
+.narrative-section {
+  @apply container-light py-16;
+}
+.narrative-prose {
+  @apply text-text-tertiary leading-relaxed;
+}
+
 /* peycheff.com - hyper-clean personal OS */
 @layer base {
   html {

@@ -331,7 +331,20 @@ export const createCheckoutSession = async (productKey, customerOrOptions = null
     if (orderBump && STRIPE_PRODUCTS[orderBump]) {
       const bumpProduct = STRIPE_PRODUCTS[orderBump];
       if (bumpProduct.priceId) {
-        lineItems.push({ price: bumpProduct.priceId, quantity: 1 });
+        // Experiment: ORDER_BUMP_PRICE variant selects alternate price IDs if provided via env
+        let bumpPriceId = bumpProduct.priceId;
+        try {
+          const { getExperimentVariant } = await import('./experiments');
+          const bumpVariantValue = getExperimentVariant('ORDER_BUMP_PRICE');
+          if (bumpVariantValue === 5900 && import.meta.env.VITE_STRIPE_AUDIT_PRO_PRICE_ID_59) {
+            bumpPriceId = import.meta.env.VITE_STRIPE_AUDIT_PRO_PRICE_ID_59;
+          } else if (bumpVariantValue === 7900 && import.meta.env.VITE_STRIPE_AUDIT_PRO_PRICE_ID_79) {
+            bumpPriceId = import.meta.env.VITE_STRIPE_AUDIT_PRO_PRICE_ID_79;
+          }
+        } catch (e) {
+          // no-op
+        }
+        lineItems.push({ price: bumpPriceId, quantity: 1 });
       }
     }
 
@@ -341,6 +354,15 @@ export const createCheckoutSession = async (productKey, customerOrOptions = null
       : (customerOrOptions || {});
 
     const urlContext = options?.context ? `&goal=${encodeURIComponent(options.context.goal || '')}&stack=${encodeURIComponent(options.context.stack || '')}` : '';
+
+    // Capture referral/UTM and pass through metadata
+    const utm = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const utmParams = utm ? {
+      utm_source: utm.get('utm_source') || undefined,
+      utm_campaign: utm.get('utm_campaign') || undefined,
+      utm_medium: utm.get('utm_medium') || undefined,
+      ref: utm.get('ref') || undefined
+    } : {};
     
     const checkoutOptions = {
       lineItems,
@@ -356,6 +378,7 @@ export const createCheckoutSession = async (productKey, customerOrOptions = null
         source: 'peycheff_website',
         goal: options?.context?.goal || undefined,
         stack: options?.context?.stack || undefined,
+        ...utmParams
       }
     };
     

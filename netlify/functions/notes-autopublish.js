@@ -621,6 +621,22 @@ async function notifyMembersOfNewNote(draft, content) {
   );
 
   await Promise.allSettled(emailPromises);
+  
+  // Auto-thread to LinkedIn/X (placeholder webhook calls)
+  try {
+    await fetch(process.env.LINKEDIN_WEBHOOK_URL || '', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: content.title, url: noteUrl, summary: content.summary })
+    });
+  } catch (_) {}
+  try {
+    await fetch(process.env.X_WEBHOOK_URL || '', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: content.title, url: noteUrl, summary: content.summary })
+    });
+  } catch (_) {}
   console.log(`Notified ${members.length} members of new note: ${draft.slug}`);
 }
 
