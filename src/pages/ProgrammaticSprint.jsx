@@ -24,10 +24,16 @@ const ProgrammaticSprint = () => {
     try {
       setLoading(true)
       setPreview(null)
-      const res = await fetch('/.netlify/functions/preview-sprint', {
+      // Use production sprint generator with preview mode
+      const res = await fetch('/.netlify/functions/generate-sprint-production', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal, stack: tech })
+        body: JSON.stringify({ 
+          goal, 
+          stack: tech,
+          email: 'preview@demo.com',
+          purchaseId: null // This triggers preview mode
+        })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'Preview failed')
