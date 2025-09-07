@@ -7,6 +7,7 @@ import { useScrollAnimation, scrollAnimationVariants } from '../utils/scrollAnim
 import { Tooltip } from '../components/InteractiveElements';
 import CheckoutCopilot from '../components/CheckoutCopilot';
 import useReducedMotion from '../hooks/useReducedMotion';
+import { GlassCard, AppleButton, AppleInput, AppleProgress } from '../components/ui/AppleUI';
 
 const Home = () => {
   const reducedMotion = useReducedMotion();
@@ -88,44 +89,49 @@ const Home = () => {
             className="flex flex-col gap-6"
             variants={scrollAnimationVariants.fadeInUp}
           >
-            <form onSubmit={runPreview} className="grid md:grid-cols-3 gap-3 max-w-3xl">
-              {isFeatureEnabled('PREVIEW_EMAIL_GATE') && (
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="bg-input border border-border rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent placeholder-muted-foreground md:col-span-3"
+            <GlassCard className="p-8 max-w-3xl">
+              <form onSubmit={runPreview} className="grid md:grid-cols-3 gap-4">
+                {isFeatureEnabled('PREVIEW_EMAIL_GATE') && (
+                  <div className="md:col-span-3">
+                    <AppleInput
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      label="Email"
+                      required
+                    />
+                  </div>
+                )}
+                <AppleInput
+                  type="text"
+                  value={goal}
+                  onChange={(e) => setGoal(e.target.value)}
+                  placeholder="Ship a SaaS in 30 days"
+                  label="Your Goal"
                   required
                 />
-              )}
-              <input
-                type="text"
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
-                placeholder="Your goal"
-                className="bg-input border border-border rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent placeholder-muted-foreground"
-                required
-              />
-              <input
-                type="text"
-                value={stack}
-                onChange={(e) => setStack(e.target.value)}
-                placeholder="Your stack"
-                className="bg-input border border-border rounded-lg px-4 py-3 text-[16px] focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent placeholder-muted-foreground"
-                required
-              />
-              <button
-                type="submit"
-                className="btn-primary hover-spring"
-                disabled={loadingPreview}
-              >
-                {loadingPreview ? 'Generating…' : 'Try 30‑second preview'}
-              </button>
-            </form>
+                <AppleInput
+                  type="text"
+                  value={stack}
+                  onChange={(e) => setStack(e.target.value)}
+                  placeholder="React + Node + Supabase"
+                  label="Tech Stack"
+                  required
+                />
+                <AppleButton
+                  type="submit"
+                  loading={loadingPreview}
+                  variant="primary"
+                  className="h-full"
+                >
+                  {loadingPreview ? 'Generating…' : 'Try 30‑second preview'}
+                </AppleButton>
+              </form>
+            </GlassCard>
 
             <div className="flex items-center gap-4">
-              <button onClick={startCheckout} className="btn-primary hover-spring">
+              <AppleButton onClick={startCheckout} variant="primary" size="lg">
                 {(() => {
                   try {
                     const { getExperimentVariant } = require('../lib/experiments');
@@ -135,7 +141,7 @@ const Home = () => {
                     return 'Generate my plan';
                   }
                 })()}
-              </button>
+              </AppleButton>
               <span className="text-sm text-muted-foreground">Preview shows Week‑1 only.</span>
             </div>
           </motion.div>
@@ -165,8 +171,8 @@ const Home = () => {
                 ))}
               </div>
               <div className="mt-6 flex flex-wrap gap-3">
-                <button onClick={startCheckout} className="btn-primary hover-spring">Generate my plan</button>
-                <button onClick={runPreview} className="btn-ghost hover-spring" disabled={loadingPreview}>{loadingPreview ? 'Refreshing…' : 'Refresh preview'}</button>
+                <AppleButton onClick={startCheckout} variant="primary">Generate my plan</AppleButton>
+                <AppleButton onClick={runPreview} variant="secondary" loading={loadingPreview}>{loadingPreview ? 'Refreshing…' : 'Refresh preview'}</AppleButton>
               </div>
             </div>
           </div>
@@ -346,51 +352,54 @@ const Home = () => {
             </motion.div>
             <div className="lg:col-span-8">
               <div className="space-y-8">
-                <motion.div 
-                  className="card group cursor-pointer hover-spring"
+                <motion.div
                   variants={scrollAnimationVariants.fadeInRight}
                   whileHover={{ scale: 1.02, y: -2 }}
                 >
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-h5 mb-3 group-hover:text-accent transition-colors duration-300">Sparring (90 min)</h3>
-                      <p className="text-text-tertiary group-hover:text-text-secondary transition-colors duration-300">→ 1-page plan in 24h</p>
+                  <GlassCard className="group cursor-pointer hover-spring">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-h5 mb-3 group-hover:text-accent transition-colors duration-300">Sparring (90 min)</h3>
+                        <p className="text-text-tertiary group-hover:text-text-secondary transition-colors duration-300">→ 1-page plan in 24h</p>
+                      </div>
+                      <div className="text-h4 font-semibold text-accent">$500</div>
                     </div>
-                    <div className="text-h4 font-semibold text-accent">$500</div>
-                  </div>
+                  </GlassCard>
                 </motion.div>
                 
-                <motion.div 
-                  className="card group cursor-pointer hover-spring"
+                <motion.div
                   variants={scrollAnimationVariants.fadeInRight}
                   whileHover={{ scale: 1.02, y: -2 }}
                 >
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-h5 mb-3 group-hover:text-accent transition-colors duration-300">Systems Audit (10 days)</h3>
-                      <p className="text-text-tertiary group-hover:text-text-secondary transition-colors duration-300">→ redesigned cadence + metrics</p>
+                  <GlassCard className="group cursor-pointer hover-spring">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-h5 mb-3 group-hover:text-accent transition-colors duration-300">Systems Audit (10 days)</h3>
+                        <p className="text-text-tertiary group-hover:text-text-secondary transition-colors duration-300">→ redesigned cadence + metrics</p>
+                      </div>
+                      <div className="text-h4 font-semibold text-accent">$5,000</div>
                     </div>
-                    <div className="text-h4 font-semibold text-accent">$5,000</div>
-                  </div>
+                  </GlassCard>
                 </motion.div>
                 
-                <motion.div 
-                  className="card group cursor-pointer hover-spring relative overflow-hidden"
+                <motion.div
                   variants={scrollAnimationVariants.fadeInRight}
                   whileHover={{ scale: 1.02, y: -2 }}
                 >
-                  <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center px-3 py-1 text-xs font-medium bg-accent/20 text-accent rounded-full">
-                      Most Popular
-                    </span>
-                  </div>
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-h5 mb-3 group-hover:text-accent transition-colors duration-300">Build Sprint (30 days)</h3>
-                      <p className="text-text-tertiary group-hover:text-text-secondary transition-colors duration-300">→ usable v1 shipped</p>
+                  <GlassCard className="group cursor-pointer hover-spring relative overflow-hidden">
+                    <div className="absolute top-4 right-4 z-10">
+                      <span className="inline-flex items-center px-3 py-1 text-xs font-medium bg-accent/20 text-accent rounded-full backdrop-blur-sm">
+                        Most Popular
+                      </span>
                     </div>
-                    <div className="text-h4 font-semibold text-accent">$25,000</div>
-                  </div>
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-h5 mb-3 group-hover:text-accent transition-colors duration-300">Build Sprint (30 days)</h3>
+                        <p className="text-text-tertiary group-hover:text-text-secondary transition-colors duration-300">→ usable v1 shipped</p>
+                      </div>
+                      <div className="text-h4 font-semibold text-accent">$25,000</div>
+                    </div>
+                  </GlassCard>
                 </motion.div>
               </div>
               
@@ -398,9 +407,11 @@ const Home = () => {
                 className="pt-12"
                 variants={scrollAnimationVariants.fadeInUp}
               >
-                <Link 
+                <AppleButton 
+                  as={Link}
                   to="/advisory" 
-                  className="btn-primary hover-spring inline-flex items-center group"
+                  variant="primary"
+                  size="lg"
                 >
                   Start an engagement
                   <motion.span
@@ -409,7 +420,7 @@ const Home = () => {
                   >
                     →
                   </motion.span>
-                </Link>
+                </AppleButton>
               </motion.div>
             </div>
           </div>
