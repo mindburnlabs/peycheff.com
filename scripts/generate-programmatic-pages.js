@@ -211,8 +211,8 @@ const generateAllPages = async () => {
         const component = generatePageComponent(role, stack, niche, pageData);
         
         // Create file path
-        const slug = \`\${createSlug(role.title)}-\${createSlug(stack.title)}-\${createSlug(niche.title)}\`;
-        const fileName = \`\${slug}.jsx\`;
+        const slug = `${createSlug(role.title)}-${createSlug(stack.title)}-${createSlug(niche.title)}`;
+        const fileName = `${slug}.jsx`;
         const filePath = path.join(outputDir, fileName);
         
         // Write file
@@ -221,7 +221,7 @@ const generateAllPages = async () => {
         // Track generated page
         pages.push({
           slug,
-          path: \`/\${slug}\`,
+          path: `/${slug}`,
           role: role.id,
           stack: stack.id,
           niche: niche.id,
@@ -234,34 +234,34 @@ const generateAllPages = async () => {
     }
   }
 
-  console.log(\`✅ Generated \${pages.length} programmatic pages\`);
+  console.log(`✅ Generated ${pages.length} programmatic pages`);
 
   // Generate index file with all routes
-  const indexContent = \`// Auto-generated programmatic page routes
+  const indexContent = `// Auto-generated programmatic page routes
 import { lazy } from 'react';
 
-\${pages.map(page => 
-  \`const \${page.slug.replace(/-/g, '')}Page = lazy(() => import('./${page.component.replace('.jsx', '')}'));\`
-).join('\\n')}
+${pages.map(page => 
+  `const ${page.slug.replace(/-/g, '')}Page = lazy(() => import('./${page.component.replace('.jsx', '')}'));`
+).join('\n')}
 
 export const PROGRAMMATIC_ROUTES = [
-\${pages.map(page => 
-  \`  {
+${pages.map(page => 
+  `  {
     path: '${page.path}',
-    component: \${page.slug.replace(/-/g, '')}Page,
+    component: ${page.slug.replace(/-/g, '')}Page,
     meta: ${JSON.stringify(page.meta, null, 4)}
-  }\`
-).join(',\\n')}
+  }`
+).join(',\n')}
 ];
 
 export const PROGRAMMATIC_PAGES = ${JSON.stringify(pages, null, 2)};
-\`;
+`;
 
   await fs.writeFile(path.join(outputDir, 'index.js'), indexContent);
 
   // Generate sitemap data
   const sitemapData = pages.map(page => ({
-    url: \`https://peycheff.com\${page.path}\`,
+    url: `https://peycheff.com${page.path}`,
     lastmod: new Date().toISOString(),
     priority: 0.8,
     changefreq: 'weekly'
@@ -272,7 +272,7 @@ export const PROGRAMMATIC_PAGES = ${JSON.stringify(pages, null, 2)};
     JSON.stringify(sitemapData, null, 2)
   );
 
-  console.log(\`📄 Generated sitemap with \${sitemapData.length} URLs\`);
+  console.log(`📄 Generated sitemap with ${sitemapData.length} URLs`);
   console.log('🎯 High-priority combinations created for maximum SEO impact');
 
   return { pages, generatedFiles };

@@ -20,6 +20,7 @@ const ProgrammaticSprint = lazy(() => import('./pages/ProgrammaticSprint'));
 const Utilities = lazy(() => import('./pages/Utilities'));
 const AdminMetrics = lazy(() => import('./pages/AdminMetrics'));
 const ControlCenter = lazy(() => import('./pages/ControlCenter'));
+const PostPurchaseUpsell = lazy(() => import('./pages/PostPurchaseUpsell'));
 
 const Routes = () => {
   return (
@@ -41,6 +42,7 @@ const Routes = () => {
             {/* Checkout routes */}
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+            <Route path="/upsell" element={<PostPurchaseUpsell />} />
             <Route path="/r/:token" element={<ReportView />} />
             <Route path="/sprint/:role/:stack/:niche" element={<ProgrammaticSprint />} />
             <Route path="/utilities" element={<Utilities />} />

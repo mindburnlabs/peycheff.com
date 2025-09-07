@@ -7,6 +7,22 @@ export { stripePromise };
 
 // Autopilot product suite - SKU-based naming for automation
 export const STRIPE_PRODUCTS = {
+  // AI-Powered Generators
+  SPRINT_GEN: {
+    price: 4900, // $49.00 in cents
+    name: 'Auto-Sprint Plan Generator',
+    description: 'Personalized 30-day sprint plan. AI-generated in 60 seconds.',
+    priceId: import.meta.env.VITE_STRIPE_SPRINT_GEN_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_SPRINT_GEN_PAYMENT_LINK,
+    type: 'one_time',
+    features: [
+      'Personalized 30-day sprint plan',
+      'AI-generated based on your goal/stack/team',
+      'PDF + MDX downloads',
+      'One-page cheat sheet',
+      'Weekly schedule breakdown'
+    ]
+  },
   // Strategy Calls
   CALL_60: {
     price: 19900, // $199.00 in cents
@@ -192,12 +208,79 @@ export const STRIPE_PRODUCTS = {
       'Applied to full $25K project cost'
     ]
   },
+  // Utility Pass & Tools
+  UTIL_PASS: {
+    price: 1200, // $12.00/mo in cents
+    name: 'Utility Pass',
+    description: 'Access to all AI utility tools. Monthly subscription.',
+    priceId: import.meta.env.VITE_STRIPE_UTIL_PASS_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_UTIL_PASS_PAYMENT_LINK,
+    type: 'subscription',
+    features: [
+      'UTM Memory tool',
+      'Note→Thread converter',
+      'Headline Linearify',
+      'Pricing Heuristic calculator',
+      'Brief Forge tool',
+      'Unlimited usage (Pro members)',
+      'New tools added monthly'
+    ]
+  },
+  // Agent Kit Bundle
+  AGENT_BUNDLE: {
+    price: 7900, // $79.00 in cents
+    name: 'Agent Kit Bundle',
+    description: 'n8n templates + MCP connectors + automation flows.',
+    priceId: import.meta.env.VITE_STRIPE_AGENT_BUNDLE_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_AGENT_BUNDLE_PAYMENT_LINK,
+    type: 'one_time',
+    features: [
+      'n8n automation templates',
+      'MCP connector configs',
+      'Telegram bot setup',
+      'README & documentation',
+      'Instant ZIP download'
+    ]
+  },
+  // Operator Pack
+  OPERATOR_PACK: {
+    price: 3900, // $39.00 in cents
+    name: 'Operator Pack',
+    description: 'Canonical 30-day operating system. PDF/MDX.',
+    priceId: import.meta.env.VITE_STRIPE_OPERATOR_PACK_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_OPERATOR_PACK_PAYMENT_LINK,
+    type: 'one_time',
+    features: [
+      '30-day operating cadence',
+      'Daily/weekly rituals',
+      'Metrics & instrumentation',
+      'PDF + MDX formats',
+      'Proven system from 100+ launches'
+    ]
+  },
+  // Founder Pack (Upsell)
+  FOUNDER_PACK: {
+    price: 14900, // $149.00 in cents
+    name: 'Founder Pack',
+    description: 'Everything you need to ship. Sprint + Audit + Tools + Membership.',
+    priceId: import.meta.env.VITE_STRIPE_FOUNDER_PACK_PRICE_ID,
+    paymentLink: import.meta.env.VITE_STRIPE_FOUNDER_PACK_PAYMENT_LINK,
+    type: 'one_time',
+    features: [
+      'Auto-Sprint Plan ($49 value)',
+      'Auto-Audit Pro ($99 value)',
+      'Agent Kit Bundle ($79 value)',
+      'Operator Pack ($39 value)',
+      '3 months Build Notes Pro ($87 value)',
+      'Lifetime updates to all products'
+    ]
+  },
   // Trials
   UTILITY_PASS_TRIAL: {
     price: 0, // Free trial
     name: 'Utility Pass (7-Day Trial)',
     description: '7-day free trial with 10 utility runs. Auto-converts to paid.',
-    priceId: import.meta.env.VITE_STRIPE_UTILITY_PASS_TRIAL_PRICE_ID,
+    priceId: import.meta.env.VITE_STRIPE_UTIL_PASS_TRIAL_PRICE_ID,
     paymentLink: import.meta.env.VITE_STRIPE_UTILITY_PASS_TRIAL_PAYMENT_LINK,
     type: 'trial',
     trialDays: 7,
