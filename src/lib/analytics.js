@@ -32,6 +32,13 @@ export const trackEvent = (eventName, parameters = {}) => {
   });
 };
 
+// Cryptographic hash helper (SHA-256)
+export async function sha256(text) {
+  const enc = new TextEncoder().encode(text || '');
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Comprehensive event catalog for autopilot system
 export const EVENTS = {
   // CTAs and Navigation
@@ -137,7 +144,7 @@ export const trackProductView = (product) => {
 };
 
 // Track purchase success (revenue attribution)
-export const trackPurchase = (orderData) => {
+export const trackPurchase = async (orderData) => {
   const { sku, amount_cents, currency = 'USD', customer_email, order_id } = orderData;
   
   // Enhanced e-commerce event
@@ -162,7 +169,7 @@ export const trackPurchase = (orderData) => {
   trackEvent(EVENTS.PURCHASE_SUCCESS, {
     product_sku: sku,
     revenue: amount_cents / 100,
-    customer_email: hashEmail(customer_email), // Privacy-safe
+    customer_email: customer_email ? `user_${await sha256(customer_email)}` : null,
     order_id
   });
 };
@@ -204,7 +211,7 @@ export const trackConversionStep = (step, data = {}) => {
 // =============================================================================
 
 // Track fulfillment pipeline events
-export const trackFulfillment = (event, fulfillmentData) => {
+export const trackFulfillment = async (event, fulfillmentData) => {
   const eventMap = {
     'triggered': EVENTS.FULFILLMENT_TRIGGERED,
     'completed': EVENTS.FULFILLMENT_COMPLETED,
@@ -214,7 +221,7 @@ export const trackFulfillment = (event, fulfillmentData) => {
   trackEvent(eventMap[event], {
     fulfillment_type: fulfillmentData.type,
     product_sku: fulfillmentData.sku,
-    customer_email: hashEmail(fulfillmentData.customer_email),
+    customer_email: fulfillmentData.customer_email ? `user_${await sha256(fulfillmentData.customer_email)}` : null,
     processing_time_ms: fulfillmentData.processing_time,
     success: event === 'completed'
   });
@@ -252,9 +259,10 @@ export const trackMemberActivity = (activity, data = {}) => {
 // =============================================================================
 
 // Track user identification (email capture)
-export const identifyUser = (email, properties = {}) => {
+export const identifyUser = async (email, properties = {}) => {
+  const userId = email ? `user_${await sha256(email)}` : null;
   trackEvent(EVENTS.VISITOR_IDENTIFIED, {
-    user_id: hashEmail(email),
+    user_id: userId,
     identification_method: properties.method || 'form',
     source: properties.source || 'website',
     user_properties: {
@@ -268,9 +276,9 @@ export const identifyUser = (email, properties = {}) => {
 };
 
 // Track customer conversion
-export const trackConversion = (conversionData) => {
+export const trackConversion = async (conversionData) => {
   trackEvent(EVENTS.CUSTOMER_CONVERTED, {
-    customer_id: hashEmail(conversionData.email),
+    customer_id: conversionData.email ? `user_${await sha256(conversionData.email)}` : null,
     conversion_value: conversionData.ltv || conversionData.first_purchase_value,
     conversion_path: conversionData.attribution_path,
     time_to_conversion_days: conversionData.days_since_first_visit,
@@ -312,18 +320,7 @@ function getFulfillmentType(sku) {
 }
 
 // Privacy-safe email hashing
-function hashEmail(email) {
-  if (!email) return null;
-  
-  // Simple hash for privacy (in production, use crypto.subtle.digest)
-  let hash = 0;
-  for (let i = 0; i < email.length; i++) {
-    const char = email.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return `user_${Math.abs(hash)}`;
-}
+// hashEmail replaced by sha256 above
 
 // Extract UTM parameters
 function getUTMParameter(param) {

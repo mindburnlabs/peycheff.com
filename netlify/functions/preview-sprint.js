@@ -1,4 +1,5 @@
 import { createHash } from 'crypto'
+import { createClient } from '@supabase/supabase-js'
 
 /**
  * preview-sprint
@@ -46,6 +47,35 @@ export const handler = async (event) => {
       .update(`${userGoal}|${userStack}`)
       .digest('hex')
       .slice(0, 16)
+
+    // Enforce preview usage limits (per-IP per-day)
+    const forwarded = event.headers['x-forwarded-for'] || event.headers['client-ip'] || ''
+    const ip = forwarded.split(',')[0].trim()
+    const ipHash = createHash('sha256').update(ip || 'unknown').digest('hex').slice(0, 24)
+    const counterEmail = `ip:${ipHash}`
+    const windowStart = new Date()
+    windowStart.setUTCHours(0,0,0,0)
+
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+    const limit = parseInt(process.env.PREVIEW_DAILY_LIMIT || '5', 10)
+
+    const { data: incResult, error: incError } = await supabase
+      .rpc('increment_usage', {
+        p_email: counterEmail,
+        p_sku: 'PREVIEW_SPRINT',
+        p_window_start: windowStart.toISOString(),
+        p_limit: limit
+      })
+
+    if (incError) {
+      console.error('increment_usage error', incError)
+    } else if (incResult && incResult.success === false) {
+      return {
+        statusCode: 429,
+        headers,
+        body: JSON.stringify({ error: 'Daily preview limit reached. Try again tomorrow or purchase the full plan.' })
+      }
+    }
 
     const week1 = buildWeekOneOutline(userGoal, userStack)
 

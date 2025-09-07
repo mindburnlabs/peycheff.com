@@ -87,6 +87,31 @@ const SKU_CONFIG = {
   }
 };
 
+// Additional SKUs (trial, pro membership, bundles)
+SKU_CONFIG['UTILITY_PASS_TRIAL'] = {
+  name: 'Utility Pass (7-Day Trial)',
+  type: 'trial',
+  fulfillment: 'membership_welcome',
+  entitlement: 'UTILITY_PASS_TRIAL',
+  expires_days: 7
+};
+
+SKU_CONFIG['MEMBER_PRO'] = {
+  name: 'Build Notes Pro',
+  type: 'subscription',
+  fulfillment: 'membership_welcome',
+  entitlement: 'MEMBER_PRO',
+  expires_days: 31
+};
+
+SKU_CONFIG['FOUNDER_PACK'] = {
+  name: 'Founder Pack',
+  type: 'bundle',
+  fulfillment: 'membership_welcome',
+  entitlement: 'FOUNDER_PACK',
+  expires_days: null
+};
+
 export const handler = async (event, context) => {
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
@@ -199,6 +224,14 @@ async function handleCheckoutCompleted(session, eventId) {
 
     // 3. Create entitlement
     await createEntitlement(customerEmail, skuConfig);
+
+    // Bundle extras: Founder Pack grants Member Pro (90 days) automatically
+    if (productKey === 'FOUNDER_PACK') {
+      await createEntitlement(customerEmail, {
+        entitlement: 'MEMBER_PRO',
+        expires_days: 90
+      });
+    }
 
     // 4. Track purchase for analytics
     await trackPurchaseEvent({

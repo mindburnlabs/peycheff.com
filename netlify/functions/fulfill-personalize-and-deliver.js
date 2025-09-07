@@ -1,18 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+const { aiService } = require('./lib/ai-service');
+const { pdfService } = require('./lib/pdf-service');
+const { sendEmail } = require('./lib/email-service');
+const { supabase } = require('./lib/supabase-service');
 
 /**
- * Fulfillment handler for personalized digital products (PACK_30DAY, KIT_AUTOMATION)
- * Shows 3-question form → generates personalized content → delivers via email
+ * Fulfillment handler for personalized digital products (PACK_30DAY, KIT_AUTOMATION, KIT_DIAGRAMS)
+ * Directly generates personalized content using AI → creates PDF → delivers via email
  */
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -23,343 +18,355 @@ export const handler = async (event, context) => {
   try {
     // Verify authorization
     const authHeader = event.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const expectedAuth = `Bearer ${process.env.FULFILLMENT_SECRET || 'default-secret'}`;
+    
+    if (authHeader !== expectedAuth) {
       return {
         statusCode: 401,
         body: JSON.stringify({ error: 'Unauthorized' })
       };
     }
 
-    const { sku, config, purchase } = JSON.parse(event.body);
+    const requestBody = JSON.parse(event.body);
+    const { sku, config, purchase } = requestBody;
+
+    console.log(`Processing personalized fulfillment for ${sku} → ${purchase.customer_email}`);
+
+    // Extract user inputs from purchase metadata
+    const userInputs = extractUserInputsFromMetadata(purchase.metadata, purchase.customer_email, sku);
+
+    // Record the purchase in pack_purchases table
+    const purchaseRecord = await createPackPurchase({
+      stripe_payment_intent_id: purchase.session_id,
+      stripe_customer_id: purchase.metadata.stripe_customer_id || null,
+      stripe_checkout_session_id: purchase.session_id,
+      pack_type: sku,
+      amount: purchase.amount,
+      currency: 'usd',
+      status: 'paid',
+      customer_email: purchase.customer_email,
+      customer_name: purchase.metadata.customer_name || null,
+      customer_metadata: purchase.metadata || {}
+    });
+
+    // Start pack generation with timing
+    const startTime = Date.now();
     
-    console.log(`Processing personalization fulfillment for ${sku}:`, purchase.customer_email);
+    try {
+      // Generate personalized content using AI
+      console.log(`Generating AI content for ${sku}...`);
+      const packResult = await aiService.generatePersonalizedPack(sku, userInputs);
+      
+      if (!packResult.success) {
+        throw new Error(`AI generation failed: ${packResult.error}`);
+      }
 
-    // Send email with 3-question personalization form
-    await sendPersonalizationForm(sku, config, purchase);
+      console.log(`AI generation completed. Generated ${Object.keys(packResult.sections).length} sections`);
 
-    // Set up webhook listener for form responses (alternative to this could be a separate endpoint)
-    // When form is completed, generatePersonalizedContent will be called
+      // Generate PDF
+      console.log(`Generating PDF for ${sku}...`);
+      const pdfResult = await pdfService.generatePackPDF(packResult, sku);
+      
+      if (!pdfResult.success) {
+        console.warn(`PDF generation failed: ${pdfResult.error}`);
+      }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        success: true,
-        type: 'personalization_form_sent',
-        message: '3-question form sent to customer'
-      })
-    };
+      const endTime = Date.now();
+      const generationDuration = endTime - startTime;
+
+      // Store generation record
+      const generationRecord = await createPackGeneration({
+        pack_type: sku,
+        pack_title: packResult.title,
+        user_email: purchase.customer_email,
+        user_name: userInputs.name || purchase.metadata.customer_name,
+        user_inputs: userInputs,
+        content_generated: true,
+        pdf_generated: !!pdfResult?.success,
+        generated_at: packResult.generatedAt,
+        sections_count: Object.keys(packResult.sections).length,
+        content_size: JSON.stringify(packResult).length,
+        pdf_size: pdfResult?.size || 0,
+        stripe_payment_intent_id: purchase.session_id,
+        purchase_amount: purchase.amount,
+        purchase_currency: 'usd',
+        ai_model_used: 'gpt-4',
+        generation_duration_ms: generationDuration,
+        generated_content: packResult
+      });
+
+      // Update purchase record with generation ID
+      await updatePackPurchase(purchaseRecord.id, {
+        fulfilled: true,
+        fulfilled_at: new Date().toISOString(),
+        pack_generation_id: generationRecord.id
+      });
+
+      // Send delivery email with pack content
+      await sendPackDeliveryEmail({
+        userInputs: {
+          ...userInputs,
+          email: purchase.customer_email,
+          name: userInputs.name || purchase.metadata.customer_name || 'Valued Customer'
+        },
+        packResult,
+        pdfResult: pdfResult?.success ? pdfResult : null,
+        packType: sku,
+        purchaseAmount: purchase.amount
+      });
+
+      // Update generation record to mark email sent
+      await updatePackGeneration(generationRecord.id, {
+        email_sent: true,
+        email_sent_at: new Date().toISOString()
+      });
+
+      console.log(`Pack fulfillment completed for ${sku} → ${purchase.customer_email} in ${generationDuration}ms`);
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: true,
+          sku,
+          customer_email: purchase.customer_email,
+          generation_id: generationRecord.id,
+          generation_time_ms: generationDuration,
+          sections_generated: Object.keys(packResult.sections).length,
+          pdf_generated: !!pdfResult?.success,
+          email_sent: true
+        })
+      };
+
+    } catch (generationError) {
+      console.error(`Pack generation failed for ${sku}:`, generationError);
+
+      // Record failed generation
+      const failedRecord = await createPackGeneration({
+        pack_type: sku,
+        user_email: purchase.customer_email,
+        user_name: userInputs.name || purchase.metadata.customer_name,
+        user_inputs: userInputs,
+        content_generated: false,
+        pdf_generated: false,
+        stripe_payment_intent_id: purchase.session_id,
+        purchase_amount: purchase.amount,
+        generation_error: generationError.message,
+        generation_duration_ms: Date.now() - startTime
+      });
+
+      // Send error notification to customer
+      await sendPackErrorNotification({
+        customer_email: purchase.customer_email,
+        customer_name: userInputs.name || 'Valued Customer',
+        pack_name: config.name,
+        error_message: 'We encountered an issue generating your pack. Our team has been notified and will manually complete your order within 24 hours.'
+      });
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: false,
+          sku,
+          customer_email: purchase.customer_email,
+          error: 'Generation failed - manual fulfillment initiated',
+          generation_id: failedRecord.id
+        })
+      };
+    }
 
   } catch (error) {
-    console.error('Personalization fulfillment error:', error);
-    
+    console.error('Fulfillment error:', error);
+
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: 'Fulfillment failed',
+        error: 'Fulfillment processing failed',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       })
     };
   }
 };
 
-// =============================================================================
-// PERSONALIZATION FLOW
-// =============================================================================
+// Helper function to extract user inputs from purchase metadata
+function extractUserInputsFromMetadata(metadata, customerEmail, sku) {
+  // Start with defaults
+  const userInputs = {
+    name: metadata.customer_name || metadata.name || '',
+    email: customerEmail
+  };
 
-async function sendPersonalizationForm(sku, config, purchase) {
-  // Generate secure token for form submission
-  const formToken = Buffer.from(JSON.stringify({
-    sku,
-    customer_email: purchase.customer_email,
-    order_id: purchase.order_id,
-    expires: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days
-  })).toString('base64url');
+  // Pack-specific field extraction from metadata
+  if (sku === 'PACK_30DAY') {
+    userInputs.idea = metadata.idea || metadata.project_idea || '';
+    userInputs.timeline = metadata.timeline || '30 days';
+    userInputs.technical_level = metadata.technical_level || metadata.tech_level || 'Intermediate';
+    userInputs.industry = metadata.industry || '';
+    userInputs.budget = metadata.budget || '';
+    userInputs.team_size = metadata.team_size || 'Just me';
+    userInputs.target_market = metadata.target_market || '';
+    userInputs.biggest_challenge = metadata.biggest_challenge || metadata.challenge || '';
+    userInputs.success_criteria = metadata.success_criteria || '';
+  } else if (sku === 'KIT_AUTOMATION') {
+    userInputs.current_tools = metadata.current_tools || metadata.tools || '';
+    userInputs.biggest_challenge = metadata.biggest_challenge || metadata.challenge || 'Time management';
+    userInputs.industry = metadata.industry || '';
+    userInputs.team_size = metadata.team_size || 'Just me';
+    userInputs.technical_level = metadata.technical_level || 'Intermediate';
+    userInputs.time_spent = metadata.time_spent || '';
+    userInputs.manual_processes = metadata.manual_processes || '';
+  } else if (sku === 'KIT_DIAGRAMS') {
+    userInputs.industry = metadata.industry || '';
+    userInputs.team_size = metadata.team_size || 'Just me';
+    userInputs.role = metadata.role || '';
+    userInputs.biggest_challenge = metadata.biggest_challenge || metadata.challenge || '';
+    userInputs.decision_types = metadata.decision_types || '';
+    userInputs.stakeholders = metadata.stakeholders || '';
+  }
 
-  const formUrl = `https://peycheff.com/personalize?token=${formToken}`;
+  // Add common optional fields
+  userInputs.company = metadata.company || '';
+  userInputs.additional_context = metadata.additional_context || metadata.notes || '';
 
-  const questions = getQuestionsForSku(sku);
-
-  const htmlContent = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #1d1d1f;">
-      <div style="text-align: center; margin-bottom: 40px;">
-        <h1 style="font-size: 28px; font-weight: 600; margin: 0; color: #1d1d1f;">Almost Ready</h1>
-        <p style="font-size: 18px; color: #86868b; margin: 8px 0 0 0;">3 quick questions to personalize your ${config.name}</p>
-      </div>
-      
-      <div style="background: #f5f5f7; border-radius: 12px; padding: 24px; margin: 32px 0;">
-        <p style="margin: 0 0 16px 0; font-size: 16px;">I'll customize your pack based on:</p>
-        <ul style="margin: 0; padding-left: 20px; color: #1d1d1f;">
-          ${questions.map(q => `<li style="margin: 8px 0;">${q}</li>`).join('')}
-        </ul>
-      </div>
-
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="${formUrl}" 
-           style="display: inline-block; background: #0a84ff; color: white; text-decoration: none; padding: 16px 32px; border-radius: 12px; font-weight: 600; font-size: 18px;">
-          Personalize My Pack
-        </a>
-        <p style="font-size: 14px; color: #86868b; margin: 16px 0 0 0;">Takes 30 seconds • Your customized pack will be ready in minutes</p>
-      </div>
-
-      <div style="margin: 32px 0; padding: 24px; background: #fff; border: 1px solid #d2d2d7; border-radius: 12px;">
-        <h3 style="font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">Skip personalization?</h3>
-        <p style="font-size: 14px; color: #86868b; margin: 0;">I'll send you the standard version in 24 hours if you don't customize. But the personalized version is much better.</p>
-      </div>
-
-      <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #d2d2d7; font-size: 14px; color: #86868b;">
-        <p>Questions? Just reply to this email.</p>
-        <p>— Ivan</p>
-      </div>
-    </div>
-  `;
-
-  await resend.emails.send({
-    from: 'Ivan Peychev <ivan@peycheff.com>',
-    to: purchase.customer_email,
-    subject: `Personalize your ${config.name} (30 seconds)`,
-    html: htmlContent,
-    headers: {
-      'X-Auto-Response-Suppress': 'OOF, DR, RN, NRN, AutoReply'
-    }
-  });
-
-  // Store the pending personalization in database
-  await supabase
-    .from('personalizations')
-    .upsert({
-      token: formToken,
-      sku,
-      customer_email: purchase.customer_email,
-      order_id: purchase.order_id,
-      status: 'pending',
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    }, { onConflict: 'token' });
+  return userInputs;
 }
 
-function getQuestionsForSku(sku) {
-  const questions = {
+// Database operations
+async function createPackPurchase(purchaseData) {
+  const { data, error } = await supabase
+    .from('pack_purchases')
+    .insert(purchaseData)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating pack purchase:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+async function updatePackPurchase(purchaseId, updates) {
+  const { error } = await supabase
+    .from('pack_purchases')
+    .update(updates)
+    .eq('id', purchaseId);
+    
+  if (error) {
+    console.error('Error updating pack purchase:', error);
+    throw error;
+  }
+}
+
+async function createPackGeneration(generationData) {
+  const { data, error } = await supabase
+    .from('pack_generations')
+    .insert(generationData)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error creating pack generation:', error);
+    throw error;
+  }
+  
+  return data;
+}
+
+async function updatePackGeneration(generationId, updates) {
+  const { error } = await supabase
+    .from('pack_generations')
+    .update(updates)
+    .eq('id', generationId);
+    
+  if (error) {
+    console.error('Error updating pack generation:', error);
+    throw error;
+  }
+}
+
+// Email functions
+async function sendPackDeliveryEmail({ userInputs, packResult, pdfResult, packType, purchaseAmount }) {
+  const packNames = {
+    'PACK_30DAY': '30-Day Idea→Product Sprint',
+    'KIT_AUTOMATION': 'Micro-Automation Kit',
+    'KIT_DIAGRAMS': 'Visual Thinking Toolkit'
+  };
+
+  const emailData = {
+    to: userInputs.email,
+    subject: `Your ${packNames[packType]} is Ready! 🚀`,
+    template: 'pack-delivery',
+    data: {
+      name: userInputs.name || 'there',
+      packTitle: packResult.title,
+      packType: packNames[packType],
+      sectionsCount: Object.keys(packResult.sections).length,
+      purchaseAmount: `$${(purchaseAmount / 100).toFixed(2)}`,
+      hasPDF: !!pdfResult,
+      pdfSize: pdfResult ? Math.round(pdfResult.size / 1024) : 0,
+      generatedAt: new Date(packResult.generatedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      // Include first section preview
+      previewSection: Object.values(packResult.sections)[0],
+      nextSteps: getNextStepsForPack(packType),
+      supportEmail: 'ivan@peycheff.com'
+    }
+  };
+
+  // Attach PDF if available and under size limit
+  if (pdfResult && pdfResult.size < 10 * 1024 * 1024) { // 10MB limit
+    emailData.attachments = [{
+      filename: `${packResult.title.replace(/[^a-z0-9]/gi, '-')}.pdf`,
+      content: pdfResult.buffer,
+      contentType: 'application/pdf'
+    }];
+  }
+
+  return await sendEmail(emailData);
+}
+
+async function sendPackErrorNotification({ customer_email, customer_name, pack_name, error_message }) {
+  const emailData = {
+    to: customer_email,
+    subject: `Update on Your ${pack_name} Order`,
+    template: 'pack-error',
+    data: {
+      name: customer_name,
+      pack_name,
+      error_message,
+      support_email: 'ivan@peycheff.com'
+    }
+  };
+
+  return await sendEmail(emailData);
+}
+
+function getNextStepsForPack(packType) {
+  const nextSteps = {
     'PACK_30DAY': [
-      'Your current tech stack (React, Python, etc.)',
-      'Team size and roles',
-      'Target timeline (MVP in 30/60/90 days)'
+      'Review your personalized roadmap',
+      'Set up your development environment',
+      'Start with Week 1 validation activities',
+      'Book a strategy session for detailed planning'
     ],
     'KIT_AUTOMATION': [
-      'Your main workflow pain points',
-      'Tools you already use (Notion, Slack, etc.)',
-      'Technical comfort level (beginner/intermediate/advanced)'
+      'Review your automation audit',
+      'Start with the quick wins (0-2 hours)',
+      'Set up your first automation script',
+      'Schedule a follow-up for advanced automations'
+    ],
+    'KIT_DIAGRAMS': [
+      'Explore your visual thinking framework',
+      'Try the diagram templates for your next project',
+      'Customize templates for your team',
+      'Book a session for advanced visual strategy'
     ]
   };
 
-  return questions[sku] || [
-    'Your industry/market',
-    'Current challenges',
-    'Preferred format (PDF/Notion/Email)'
-  ];
+  return nextSteps[packType] || [];
 }
 
-// =============================================================================
-// AI CONTENT GENERATION (Called by form submission endpoint)
-// =============================================================================
-
-export async function generatePersonalizedContent(formData) {
-  const { sku, answers, customer_email } = formData;
-  
-  try {
-    console.log(`Generating personalized content for ${sku}:`, customer_email);
-
-    // Generate content based on SKU and answers
-    const generatedContent = await callContentGenerationAPI(sku, answers);
-    
-    // Create PDF/MDX file and upload to Supabase Storage
-    const downloadInfo = await createDownloadableFile(sku, generatedContent, customer_email);
-    
-    // Send delivery email with download link
-    await sendDeliveryEmail(sku, customer_email, downloadInfo, answers);
-    
-    // Update personalization status
-    await supabase
-      .from('personalizations')
-      .update({ 
-        status: 'completed',
-        answers: answers,
-        delivered_at: new Date().toISOString()
-      })
-      .eq('customer_email', customer_email)
-      .eq('sku', sku);
-
-    return {
-      success: true,
-      download_info: downloadInfo
-    };
-
-  } catch (error) {
-    console.error('Content generation error:', error);
-    throw error;
-  }
-}
-
-async function callContentGenerationAPI(sku, answers) {
-  const prompts = {
-    'PACK_30DAY': `Create a personalized 30-Day Idea→Product Sprint framework for a founder with:
-- Tech stack: ${answers.tech_stack}
-- Team size: ${answers.team_size}
-- Timeline: ${answers.timeline}
-
-Generate:
-1. 4 weekly schedules with daily tasks
-2. Tech stack specific setup guides
-3. Team coordination checklists
-4. Risk mitigation based on timeline
-5. Success metrics and review cadences
-
-Format: Structured markdown with clear sections, actionable tasks, and time estimates.`,
-
-    'KIT_AUTOMATION': `Create 4 micro-automation playbooks for:
-- Pain points: ${answers.pain_points}
-- Current tools: ${answers.current_tools}
-- Technical level: ${answers.technical_level}
-
-Generate playbooks for:
-1. ${answers.pain_points.split(',')[0]} automation
-2. Tool integration workflow
-3. Monitoring and alerts setup
-4. Efficiency measurement system
-
-Include: Step-by-step scripts, JSON configs, and troubleshooting guides tailored to their tech level.`
-  };
-
-  const prompt = prompts[sku];
-  if (!prompt) {
-    throw new Error(`No prompt configured for SKU: ${sku}`);
-  }
-
-  // Call OpenAI/Anthropic API (using OpenAI as example)
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are Ivan Peychev\'s content generator. Write in a blunt, street-smart, visionary tone. No fluff. Apple-clean formatting. Max 3-line paragraphs.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: 4000,
-      temperature: 0.7
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Content generation failed: ${response.statusText}`);
-  }
-
-  const result = await response.json();
-  return result.choices[0].message.content;
-}
-
-async function createDownloadableFile(sku, content, customerEmail) {
-  // Generate filename
-  const timestamp = new Date().toISOString().split('T')[0];
-  const filename = `${sku.toLowerCase()}-${customerEmail.split('@')[0]}-${timestamp}.md`;
-  const filePath = `downloads/${sku}/${filename}`;
-
-  // Upload to Supabase Storage
-  const { data, error } = await supabase.storage
-    .from('downloads')
-    .upload(filePath, content, {
-      contentType: 'text/markdown',
-      metadata: {
-        customer_email: customerEmail,
-        sku: sku,
-        generated_at: new Date().toISOString()
-      }
-    });
-
-  if (error) {
-    console.error('File upload error:', error);
-    throw error;
-  }
-
-  // Create signed URL (expires in 7 days)
-  const { data: signedUrl } = await supabase.storage
-    .from('downloads')
-    .createSignedUrl(filePath, 7 * 24 * 60 * 60); // 7 days
-
-  // Store download record
-  const downloadToken = crypto.randomUUID();
-  
-  await supabase
-    .from('downloads')
-    .insert({
-      email: customerEmail,
-      sku: sku,
-      file_path: filePath,
-      token: downloadToken,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    });
-
-  return {
-    filename,
-    download_url: signedUrl.signedUrl,
-    token: downloadToken,
-    expires_in_days: 7
-  };
-}
-
-async function sendDeliveryEmail(sku, customerEmail, downloadInfo, answers) {
-  const skuNames = {
-    'PACK_30DAY': '30-Day Sprint Framework',
-    'KIT_AUTOMATION': 'Automation Playbook Kit'
-  };
-
-  const htmlContent = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #1d1d1f;">
-      <div style="text-align: center; margin-bottom: 40px;">
-        <h1 style="font-size: 28px; font-weight: 600; margin: 0; color: #1d1d1f;">Your Pack is Ready</h1>
-        <p style="font-size: 18px; color: #86868b; margin: 8px 0 0 0;">Personalized ${skuNames[sku]}</p>
-      </div>
-      
-      <div style="background: #f5f5f7; border-radius: 12px; padding: 24px; margin: 32px 0;">
-        <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Customized for your setup:</h3>
-        <ul style="margin: 0; padding-left: 20px;">
-          ${Object.entries(answers).map(([key, value]) => 
-            `<li style="margin: 6px 0; color: #1d1d1f;"><strong>${key.replace('_', ' ')}:</strong> ${value}</li>`
-          ).join('')}
-        </ul>
-      </div>
-
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="${downloadInfo.download_url}" 
-           style="display: inline-block; background: #0a84ff; color: white; text-decoration: none; padding: 16px 32px; border-radius: 12px; font-weight: 600; font-size: 18px;">
-          Download Your Pack
-        </a>
-        <p style="font-size: 14px; color: #86868b; margin: 16px 0 0 0;">Link expires in ${downloadInfo.expires_in_days} days</p>
-      </div>
-
-      <div style="margin: 32px 0; padding: 24px; background: #fff4e6; border-radius: 12px;">
-        <h3 style="font-size: 16px; font-weight: 600; margin: 0 0 12px 0; color: #b25000;">💡 Pro tip</h3>
-        <p style="font-size: 14px; color: #1d1d1f; margin: 0;">Print the first section and keep it on your desk. The best frameworks are the ones you actually use.</p>
-      </div>
-
-      <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #d2d2d7; font-size: 14px; color: #86868b;">
-        <p>Need clarification on anything? Just reply to this email.</p>
-        <p>— Ivan</p>
-      </div>
-    </div>
-  `;
-
-  await resend.emails.send({
-    from: 'Ivan Peychev <ivan@peycheff.com>',
-    to: customerEmail,
-    subject: `Your personalized ${skuNames[sku]} is ready`,
-    html: htmlContent
-  });
-}

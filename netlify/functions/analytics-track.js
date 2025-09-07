@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -93,7 +94,7 @@ async function trackPurchaseEvent(data) {
     event_data: {
       sku,
       amount_cents,
-      customer_id: hashEmail(customer_email),
+      customer_id: customer_email ? `user_${crypto.createHash('sha256').update(customer_email).digest('hex')}` : null,
       order_id,
       session_id,
       timestamp: new Date().toISOString(),
@@ -127,13 +128,13 @@ async function trackFulfillmentEvent(data) {
     event_data: {
       fulfillment_type: type,
       sku,
-      customer_id: hashEmail(customer_email),
+      customer_id: customer_email ? `user_${crypto.createHash('sha256').update(customer_email).digest('hex')}` : null,
       success,
       processing_time_ms: processing_time,
       error_message: success ? null : error_message,
       timestamp: new Date().toISOString()
     },
-    user_id: hashEmail(customer_email),
+    user_id: customer_email ? `user_${crypto.createHash('sha256').update(customer_email).digest('hex')}` : null,
     created_at: new Date().toISOString()
   };
 
@@ -247,17 +248,22 @@ async function sendToGoogleAnalytics(eventType, eventData) {
   }
 
   try {
+    // Provide client_id or user_id for dedup; prefer client-provided ids if available
+    const clientId = eventData.client_id || `srv_${crypto.randomBytes(8).toString('hex')}`;
+    const eventId = eventData.event_id || crypto.randomUUID();
     const response = await fetch(
       `https://www.google-analytics.com/mp/collect?measurement_id=${process.env.VITE_GA_MEASUREMENT_ID}&api_secret=${process.env.GA_SECRET}`,
       {
         method: 'POST',
         body: JSON.stringify({
-          client_id: eventData.customer_id || 'server',
+          client_id: clientId,
           events: [{
             name: eventType,
             params: {
               ...eventData,
-              event_source: 'server'
+              event_source: 'server',
+              // event_id enables client/server dedup when matching
+              event_id: eventId
             }
           }]
         })
