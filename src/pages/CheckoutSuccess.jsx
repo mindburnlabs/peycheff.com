@@ -4,10 +4,13 @@ import { trackEvent, EVENTS, trackConversionStep, identifyUser } from '../lib/an
 import { STRIPE_PRODUCTS } from '../lib/stripe';
 import Icon from '../components/AppIcon';
 import SEO from '../components/SEO';
+import SuccessAnimation from '../components/SuccessAnimation';
 
 const CheckoutSuccess = () => {
   const [searchParams] = useSearchParams();
   const [isTracked, setIsTracked] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationCompleted, setAnimationCompleted] = useState(false);
   const sessionId = searchParams.get('session_id');
   const productKey = searchParams.get('product');
   const customerEmail = searchParams.get('email'); // If passed via URL
@@ -47,6 +50,9 @@ const CheckoutSuccess = () => {
         });
       }
       
+      // Show success animation
+      setShowAnimation(true);
+      
       // Track page performance
       setTimeout(() => {
         if (window.performance) {
@@ -70,8 +76,22 @@ const CheckoutSuccess = () => {
         description="Your purchase has been completed successfully."
       />
       
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+      {/* Success Animation Overlay */}
+      <SuccessAnimation 
+        show={showAnimation && !animationCompleted}
+        onComplete={() => setAnimationCompleted(true)}
+        title="Purchase Complete!"
+        message={product ? `Thank you for purchasing ${product.name}!` : "Thank you for your purchase!"}
+        duration={3500}
+        showConfetti={true}
+      />
+      
+      <div className={`min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-6 transition-all duration-1000 ${
+        !animationCompleted ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+      }`}>
+        <div className={`max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center transform transition-all duration-700 delay-300 ${
+          !animationCompleted ? 'translate-y-8 opacity-0' : 'translate-y-0 opacity-100'
+        }`}>
           {/* Success Icon */}
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Icon name="Check" size={40} className="text-green-600" />
