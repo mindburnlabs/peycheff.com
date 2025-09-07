@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+const { createClient } = require('@supabase/supabase-js');
+const { Resend } = require('resend');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -21,7 +21,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * 7. Generate OG image → black-on-white card
  * 8. Publish → save MDX + send member email
  */
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // Only allow POST (for manual trigger) or scheduled execution
   if (event.httpMethod !== 'POST' && !event.headers['x-netlify-cron']) {
     return {

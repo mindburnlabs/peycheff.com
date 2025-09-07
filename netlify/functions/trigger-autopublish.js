@@ -2,7 +2,7 @@
  * Manual trigger for autopublish pipeline
  * Useful for testing and manual content generation
  */
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
