@@ -8,7 +8,7 @@ const AdminMetrics = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/.netlify/functions/metrics-dashboard', {
+        const res = await fetch('/api/metrics-dashboard', {
           headers: { 'Authorization': `Bearer ${import.meta.env.VITE_DASH_SECRET || 'default'}` }
         });
         const json = await res.json();

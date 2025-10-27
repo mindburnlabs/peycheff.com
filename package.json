@@ -67,9 +67,11 @@
     "web-vitals": "^5.1.0"
   },
   "scripts": {
-    "start": "vite",
-    "build": "vite build --sourcemap",
+    "dev": "vite --port 4028",
+    "start": "vite --port 4028",
+    "build": "vite build",
     "serve": "vite preview",
+    "vercel-build": "vite build",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run"

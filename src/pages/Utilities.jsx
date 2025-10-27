@@ -30,7 +30,7 @@ const Utilities = () => {
       setMessage(null);
       trackEvent(EVENTS.TRIAL_SIGNUP_START, { email: `user_${email}` });
 
-      const res = await fetch('/.netlify/functions/utility-trial-signup', {
+      const res = await fetch('/api/utility-trial-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, source: 'utilities_page' })
@@ -66,7 +66,7 @@ const Utilities = () => {
       setResult(null);
 
       // 1) Check entitlements (Pro membership or Trial). Increment on success.
-      const checkRes = await fetch('/.netlify/functions/check-entitlements', {
+      const checkRes = await fetch('/api/check-entitlements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, action: 'pro_utility', increment: true })
@@ -91,7 +91,7 @@ const Utilities = () => {
       }
 
       // 2) Run a demo utility: generate a quick audit report
-      const utilRes = await fetch('/.netlify/functions/generate-audit-report', {
+      const utilRes = await fetch('/api/generate-audit-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

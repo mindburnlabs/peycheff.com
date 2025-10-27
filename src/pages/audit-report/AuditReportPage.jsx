@@ -13,7 +13,7 @@ const AuditReportPage = () => {
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const response = await fetch(`/.netlify/functions/get-audit-report`, {
+        const response = await fetch(`/api/get-audit-report`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reportId })

@@ -32,7 +32,7 @@ const NewsletterSubscription = ({
 
     try {
       // Call newsletter subscription API
-      const response = await fetch('/.netlify/functions/newsletter-subscribe', {
+      const response = await fetch('/api/newsletter-subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

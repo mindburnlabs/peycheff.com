@@ -32,7 +32,7 @@ const Home = () => {
         throw new Error('Please enter your email to see the preview.');
       }
 
-      const res = await fetch('/.netlify/functions/preview-sprint', {
+      const res = await fetch('/api/preview-sprint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ goal, stack })

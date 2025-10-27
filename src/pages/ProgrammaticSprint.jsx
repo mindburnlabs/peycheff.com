@@ -25,7 +25,7 @@ const ProgrammaticSprint = () => {
       setLoading(true)
       setPreview(null)
       // Use production sprint generator with preview mode
-      const res = await fetch('/.netlify/functions/generate-sprint-production', {
+      const res = await fetch('/api/generate-sprint-production', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

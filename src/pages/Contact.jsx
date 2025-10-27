@@ -58,7 +58,7 @@ const Contact = () => {
       }
       
       // Send email notifications via serverless function
-      const emailResponse = await fetch('/.netlify/functions/contact-inquiry', {
+      const emailResponse = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

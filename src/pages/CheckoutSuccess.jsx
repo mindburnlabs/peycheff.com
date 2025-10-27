@@ -72,7 +72,7 @@ const CheckoutSuccess = () => {
 
   const openPortal = async () => {
     try {
-      const res = await fetch('/.netlify/functions/stripe-portal', {
+      const res = await fetch('/api/stripe-portal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId: null, returnUrl: window.location.origin })

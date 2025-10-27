@@ -37,7 +37,7 @@ const InteractivePreview = ({ defaultFormData = {} }) => {
     setError(null);
 
     try {
-      const response = await fetch('/.netlify/functions/preview-sprint', {
+      const response = await fetch('/api/preview-sprint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
