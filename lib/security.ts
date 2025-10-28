@@ -64,8 +64,8 @@ const SUSPICIOUS_PATTERNS = [
   /(<iframe|<object|<embed|<link|<meta)/i,
   // Path traversal
   /(\.\.[\/\\])/i,
-  // Command injection
-  /(;|\||&|\$\(|`|wget|curl|nc|netcat)/i,
+  // Command injection (more specific patterns)
+  /(\s;\s|\s\|\s|\s&\s|\$\(|`|wget\s|curl\s|nc\s|netcat)/i,
   // Common attack payloads
   /(base64_encode|base64_decode|eval|exec|system|shell_exec|passthru)/i
 ]
