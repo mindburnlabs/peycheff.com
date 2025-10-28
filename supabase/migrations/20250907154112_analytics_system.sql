@@ -5,8 +5,8 @@
 -- ANALYTICS TABLES
 -- =============================================================================
 
--- Comprehensive event tracking
-CREATE TABLE analytics_events (
+-- Comprehensive event tracking (table may already exist from initial setup)
+CREATE TABLE IF NOT EXISTS analytics_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type TEXT NOT NULL, -- 'purchase', 'fulfillment', 'autopublish', etc.
   event_data JSONB NOT NULL, -- Flexible event properties
@@ -67,13 +67,20 @@ CREATE TABLE performance_metrics (
 -- ROW LEVEL SECURITY
 -- =============================================================================
 
+-- Enable RLS on analytics tables (if not already enabled)
 ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_metrics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE content_metrics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversion_funnels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE performance_metrics ENABLE ROW LEVEL SECURITY;
 
--- Service role policies
+-- Service role policies (drop existing ones first to avoid conflicts)
+DROP POLICY IF EXISTS "Service role full access" ON analytics_events;
+DROP POLICY IF EXISTS "Service role full access" ON daily_metrics;
+DROP POLICY IF EXISTS "Service role full access" ON content_metrics;
+DROP POLICY IF EXISTS "Service role full access" ON conversion_funnels;
+DROP POLICY IF EXISTS "Service role full access" ON performance_metrics;
+
 CREATE POLICY "Service role full access" ON analytics_events FOR ALL USING (true);
 CREATE POLICY "Service role full access" ON daily_metrics FOR ALL USING (true);
 CREATE POLICY "Service role full access" ON content_metrics FOR ALL USING (true);
@@ -84,11 +91,11 @@ CREATE POLICY "Service role full access" ON performance_metrics FOR ALL USING (t
 -- INDEXES FOR PERFORMANCE
 -- =============================================================================
 
--- Analytics events
-CREATE INDEX idx_analytics_events_type ON analytics_events(event_type);
-CREATE INDEX idx_analytics_events_user_id ON analytics_events(user_id);
-CREATE INDEX idx_analytics_events_created_at ON analytics_events(created_at DESC);
-CREATE INDEX idx_analytics_events_session_id ON analytics_events(session_id);
+-- Analytics events (use existing column names from original table)
+CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON analytics_events(event_name);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_user_id ON analytics_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_session_id ON analytics_events(session_id);
 
 -- Daily metrics
 CREATE INDEX idx_daily_metrics_date ON daily_metrics(date DESC);

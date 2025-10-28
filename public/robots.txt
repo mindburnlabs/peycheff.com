@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-
-# Sitemap
-Sitemap: https://peycheff.com/sitemap.xml
-
-# No restrictions for peycheff.com - clean, public site

@@ -1,0 +1,50 @@
+"use strict";(()=>{var e={};e.id=689,e.ids=[689],e.modules={2934:e=>{e.exports=require("next/dist/client/components/action-async-storage.external.js")},4580:e=>{e.exports=require("next/dist/client/components/request-async-storage.external.js")},5869:e=>{e.exports=require("next/dist/client/components/static-generation-async-storage.external.js")},399:e=>{e.exports=require("next/dist/compiled/next-server/app-page.runtime.prod.js")},517:e=>{e.exports=require("next/dist/compiled/next-server/app-route.runtime.prod.js")},4770:e=>{e.exports=require("crypto")},2615:e=>{e.exports=require("http")},8791:e=>{e.exports=require("https")},8621:e=>{e.exports=require("punycode")},6162:e=>{e.exports=require("stream")},7360:e=>{e.exports=require("url")},1568:e=>{e.exports=require("zlib")},2465:(e,t,r)=>{r.r(t),r.d(t,{originalPathname:()=>k,patchFetch:()=>R,requestAsyncStorage:()=>w,routeModule:()=>_,serverHooks:()=>E,staticGenerationAsyncStorage:()=>S});var o={};r.r(o),r.d(o,{GET:()=>z,POST:()=>v});var s=r(9303),n=r(8716),i=r(3131),a=r(7070),c=r(1615),p=r(337),u=r(2723),l=r(5192),d=r(8605);let g=process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.SUPABASE_SERVICE_ROLE_KEY?(0,p.eI)(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY):null,m=new u.R(process.env.RESEND_API_KEY||"test_key"),h=(0,d.createRateLimit)(d.RATE_LIMITS["/api/whop"]),y={purchase_created:l.z.object({id:l.z.string(),user:l.z.object({id:l.z.string(),username:l.z.string(),email:l.z.string().optional()}),product:l.z.object({id:l.z.string(),name:l.z.string(),description:l.z.string().optional(),price:l.z.number()}),quantity:l.z.number(),total_amount:l.z.number(),currency:l.z.string(),created_at:l.z.string()}),purchase_completed:l.z.object({id:l.z.string(),user:l.z.object({id:l.z.string(),username:l.z.string(),email:l.z.string().optional()}),product:l.z.object({id:l.z.string(),name:l.z.string(),description:l.z.string().optional(),price:l.z.number()}),quantity:l.z.number(),total_amount:l.z.number(),currency:l.z.string(),completed_at:l.z.string()}),subscription_created:l.z.object({id:l.z.string(),user:l.z.object({id:l.z.string(),username:l.z.string(),email:l.z.string().optional()}),product:l.z.object({id:l.z.string(),name:l.z.string(),description:l.z.string().optional(),price:l.z.number()}),quantity:l.z.number(),total_amount:l.z.number(),currency:l.z.string(),created_at:l.z.string()})};async function x(e,t){if(!g)return console.log("Supabase not configured, skipping database storage"),{success:!0,data:null,note:"Database storage skipped"};try{let{data:r,error:o}=await g.from("purchases").upsert({id:e.id,user_id:e.user.id,username:e.user.username,email:e.user.email,product_id:e.product.id,product_name:e.product.name,product_description:e.product.description,price:e.total_amount,currency:e.currency,quantity:e.quantity,status:t.includes("completed")?"completed":"pending",created_at:e.created_at||e.completed_at,webhook_type:t}).select();if(o)return console.error("Database error:",o),{success:!1,error:o.message};return console.log("Purchase stored:",r),{success:!0,data:r}}catch(e){return console.error("Store purchase error:",e),{success:!1,error:e.message}}}async function f(e,t){if(!e.user.email)return console.log("No email provided, skipping confirmation"),{success:!1,error:"No email address"};try{let t={subject:`Your ${e.product.name} purchase is confirmed!`,html:`
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">Purchase Confirmed!</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 15px 0 0 0; font-size: 18px;">Thank you for your purchase, ${e.user.username}!</p>
+          </div>
+
+          <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin-bottom: 25px;">
+            <h2 style="color: #1a1a1a; margin: 0 0 20px 0; font-size: 20px; font-weight: 600;">Order Details</h2>
+            <div style="background: white; padding: 20px; border-radius: 6px; border: 1px solid #e5e7eb;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="color: #1a1a1a; font-weight: 600; font-size: 18px;">${e.product.name}</span>
+                <span style="color: #10b981; font-weight: 700; font-size: 18px;">$${(e.total_amount/100).toFixed(2)}</span>
+              </div>
+              ${e.product.description?`
+                <p style="color: #6b7280; margin: 0; line-height: 1.5;">${e.product.description}</p>
+              `:""}
+              <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f3f4f6; font-size: 14px; color: #6b7280;">
+                <strong>Order ID:</strong> ${e.id}<br>
+                <strong>Quantity:</strong> ${e.quantity}<br>
+                <strong>Date:</strong> ${new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})}
+              </div>
+            </div>
+          </div>
+
+          <div style="background: white; padding: 25px; border: 1px solid #e5e7eb; border-radius: 8px;">
+            <h2 style="color: #1a1a1a; margin: 0 0 15px 0; font-size: 18px; font-weight: 600;">What happens next?</h2>
+            <ul style="color: #374151; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li style="margin-bottom: 8px;">You'll receive access instructions via email</li>
+              <li style="margin-bottom: 8px;">Check your Whop account for product access</li>
+              <li style="margin-bottom: 8px;">For digital products, download links will be available immediately</li>
+              <li>Questions? Just reply to this email</li>
+            </ul>
+          </div>
+
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://whop.com/portal"
+               style="background: #0A84FF; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+              View Your Purchase
+            </a>
+          </div>
+
+          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+            <p style="margin: 0 0 10px 0;">Thank you for supporting my work!</p>
+            <p style="margin: 0;">
+              Ivan Peycheff • <a href="mailto:ivan@peycheff.com" style="color: #0A84FF; text-decoration: none;">ivan@peycheff.com</a>
+            </p>
+          </div>
+        </div>
+      `},r=await m.emails.send({from:"Ivan Peycheff <ivan@peycheff.com>",to:e.user.email,subject:t.subject,html:t.html});return console.log("Purchase confirmation email sent:",r),{success:!0,data:r}}catch(e){return console.error("Email sending failed:",e),{success:!1,error:e.message}}}async function b(e,t){try{let t={event:"purchase_completed",properties:{product_id:e.product.id,product_name:e.product.name,price:e.total_amount,currency:e.currency,quantity:e.quantity,user_id:e.user.id,username:e.user.username,platform:"whop"},timestamp:new Date().toISOString()},r=await fetch("https://peycheff.com/api/analytics",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(t)});if(!r.ok)throw Error(`Analytics tracking failed: ${r.status}`);return console.log("Purchase event tracked successfully"),{success:!0}}catch(e){return console.error("Analytics tracking error:",e),{success:!1,error:e.message}}}async function v(e){try{let t;(0,d.getClientIP)(e);let r=(0,d.validateRequest)(e);if(!r.valid)return a.NextResponse.json({error:"Invalid request",reason:r.reason},{status:400});let o=await h(e);if(!o.success)return a.NextResponse.json({error:o.error},{status:o.statusCode,headers:{"Retry-After":o.retryAfter?.toString()||"3600"}});let s=(0,c.headers)().get("whop-signature");if(!s)return console.error("Missing Whop signature"),a.NextResponse.json({error:"Missing signature"},{status:401});let n=await e.text(),i=JSON.parse(n);if(!(0,d.validateWebhookSignature)(n,s,process.env.WHOP_WEBHOOK_SECRET||""))return console.error("Invalid Whop signature"),a.NextResponse.json({error:"Invalid signature"},{status:401});console.log("Whop webhook received:",i);let p=i.type,u=i.data;switch(p){case"purchase.created":t=y.purchase_created.parse(u);break;case"purchase.completed":t=y.purchase_completed.parse(u);break;case"subscription.created":t=y.subscription_created.parse(u);break;default:return console.log(`Unhandled event type: ${p}`),a.NextResponse.json({received:!0})}let l=await x(t,p);if(l.success||console.error("Failed to store purchase:",l.error),p.includes("completed")){let e=await f(t,p);e.success||console.error("Failed to send confirmation email:",e.error)}let g=await b(t,p);return g.success||console.error("Failed to track analytics:",g.error),console.log(`Successfully processed ${p} webhook`),a.NextResponse.json({received:!0})}catch(e){return console.error("Whop webhook error:",e),a.NextResponse.json({error:"Webhook processing failed"},{status:500})}}async function z(){return a.NextResponse.json({status:"active",service:"whop-webhook",timestamp:new Date().toISOString(),configured:{supabase:!!process.env.SUPABASE_SERVICE_ROLE_KEY,resend:!!process.env.RESEND_API_KEY,webhook_secret:!!process.env.WHOP_WEBHOOK_SECRET}})}let _=new s.AppRouteRouteModule({definition:{kind:n.x.APP_ROUTE,page:"/api/whop/route",pathname:"/api/whop",filename:"route",bundlePath:"app/api/whop/route"},resolvedPagePath:"/Users/ivan/Code/peycheff.com/app/api/whop/route.ts",nextConfigOutput:"",userland:o}),{requestAsyncStorage:w,staticGenerationAsyncStorage:S,serverHooks:E}=_,k="/api/whop/route";function R(){return(0,i.patchFetch)({serverHooks:E,staticGenerationAsyncStorage:S})}}};var t=require("../../../webpack-runtime.js");t.C(e);var r=e=>t(t.s=e),o=t.X(0,[216,592],()=>r(2465));module.exports=o})();
